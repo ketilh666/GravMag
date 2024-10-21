@@ -1,0 +1,7 @@
+matplotlib
+numpy
+scipy
+pandas
+# KetilH stuff
+khio
+
