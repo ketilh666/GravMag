@@ -200,7 +200,7 @@ class MapData:
             
             ax = axs[0][0]
             xtnt = [self.y[0], self.y[-1], self.x[0], self.x[-1]]
-            im = ax.imshow(np.abs(tma_x.T), origin='lower', extent=xtnt)
+            im = ax.imshow(tma_x.T, origin='lower', extent=xtnt)
             cb = ax.figure.colorbar(im, ax=ax, shrink=0.9) 
             ax.set_xlim(self.y[0], self.y[-1])
             ax.set_ylim(self.x[0], self.x[-1])
@@ -218,7 +218,7 @@ class MapData:
         
             ax = axs[1][0]
             xtnt = [self.y[0], self.y[-1], self.x[0], self.x[-1]]
-            im = ax.imshow(np.abs(tma_x_bp.T), origin='lower', extent=xtnt)
+            im = ax.imshow(tma_x_bp.T, origin='lower', extent=xtnt)
             cb = ax.figure.colorbar(im, ax=ax, shrink=0.9) 
             ax.set_xlim(self.y[0], self.y[-1])
             ax.set_ylim(self.x[0], self.x[-1])
@@ -384,6 +384,8 @@ class MapData:
     def decimate(self, *args, **kwargs):
         """Decimate a MapData object to coarser grid.
         
+        Output is a new MapData object. THe initial object is unchanged.
+
         If inc is given: Same increment used in both x and y directions
         If inc_x and inc_y are given: Different increments in x and y
         

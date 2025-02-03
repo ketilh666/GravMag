@@ -24,19 +24,19 @@ from gravmag.mag import to_nT
 # Run tests
 #---------------------------------------------
 
-block = True
+block = False
 
 pkl = '../Data/pkl/'
 png = 'png/'
 if not os.path.isdir(png): os.mkdir(png)
 
-ntest = 1
-for ktest in range(1,1+ntest):
+ntest = 4
+for ktest in range(0,1+ntest):
     
     gscl = 250. # sale of the problem (grid spacing)
-    if   ktest == 0: inc, dec, zr = 90,   0,  -4*gscl
-    elif ktest == 1: inc, dec, zr = 90,   0,  -8*gscl
-    elif ktest == 2: inc, dec, zr = 90,   0, -12*gscl
+    if   ktest == 0: inc, dec, zr = 90,   0,  -2*gscl
+    elif ktest == 1: inc, dec, zr = 90,   0,  -4*gscl
+    elif ktest == 2: inc, dec, zr = 90,   0,  -8*gscl
     elif ktest == 3: inc, dec, zr = 90,   0, -16*gscl
     elif ktest == 4: inc, dec, zr = 75, -15,  -4*gscl
     elif ktest == 5: inc, dec, zr = 45, -25,  -4*gscl

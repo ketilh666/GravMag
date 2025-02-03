@@ -40,6 +40,10 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     TODO: from_nT and to_nT must be replaced by a general datascaling
           to deal with gravity and FTG data. PARTLY DONE 2/2-2021
 
+    Note: The coordinate system is right-handed with positive z direction down.
+          Hence, x=Northing, y=Easting. 
+          Coordinates are Cartesian with dimension meters.
+
     Parameters
     ----------
     func_grn: function object

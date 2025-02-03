@@ -11,7 +11,7 @@ Created on Wed Dec  9 14:23:38 2020
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from itertools import product
+# from itertools import product
 
 from gravmag.earth import MagneticBackgroundField
 from gravmag.meta import MapData    
@@ -169,7 +169,7 @@ def smooth(uu, lf):
 def plot_gauss_newton(inver, synt, data, **kwargs):
     "PLot result from Gauss Newton"    
         
-    # Backward compatibility
+    # Backward compatibility: mag0 is result from iter 0, magn from iter n.
     try:    mag0 = inver.mag0
     except: mag0 = inver.mag
     try:    magn = inver.magn
@@ -322,6 +322,7 @@ def plot_data_bands(data, data_band, **kwargs):
     scl = kwargs.get('scl', 1e-3)
     interp = kwargs.get('interp', 'none')
     cmap = kwargs.get('cmap',cm.viridis)
+    suptitle = kwargs.get('suptitle', '')
     
     nband = len(data_band)
 
@@ -340,6 +341,8 @@ def plot_data_bands(data, data_band, **kwargs):
         anom_band = [data_band[jj].tma for jj in range(nband)]
         alab = 'TMA [nT]'
         
+    alab = ''
+
     # Mac/min values for colorbar
     amin = kwargs.get('amin', np.min(1.05*anom)) # Data range
     amax = kwargs.get('amax', np.max(1.05*anom)) # Data range
@@ -391,6 +394,9 @@ def plot_data_bands(data, data_band, **kwargs):
     ax.set_xlabel('easting y [km]')
     ax.set_title('{} all wavenumbers'.format(head))
     
+    fig.suptitle(suptitle)
+    fig.tight_layout(pad=1.0)
+
     return fig
 
 #-----------------------------------------------------------
