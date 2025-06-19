@@ -4,7 +4,7 @@ The linear inversion theory is presented in WGC paper by Hokstad et al. (2020). 
 See the reports and papers in the docs folder: <br />
 
 Test/demo scripts:<br /> 
-Synt data tests:
+Synt data tests:<br /> 
     sc_01_ ... : 1 magnet, and varying distance to magnetic source.<br /> 
     sc_02_ ... : 4 magnets, varying the Marquardt-Levenberg regularization.<br /> 
     sc_03_ ... : Deep brick shaped anomaly, 4 shallow anomalies<br /> 
@@ -13,5 +13,5 @@ Synt data tests:
     sc_06_ ... : Two-layer model .<br />
 
 Real data from Iceland: <br /> 
-    sc_11_ ... : Real aeromag data from Hengill volcanic zone. <br />   
-    sc_12_ ... : Real aeromag data from Hengill volcanic zon. <br />   
+    sc_11_ ... : Aeromag data from Hengill volcanic zone. <br />   
+    sc_12_ ... : Aeromag data from Hengill volcanic zone. <br />   
