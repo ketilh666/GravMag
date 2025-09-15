@@ -48,10 +48,10 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     ----------
     func_grn: function object
         Function to compute Green's function matrix
-    model_in: object
+    model_in: MapData object
         Model object initiated with geometry and initial base 
         of source layer in model.z[1]
-    data_in: object
+    data_in: MapData object
         data object with mag or grav data
         tma in nT
         
@@ -77,11 +77,13 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     inc_data: int. Data resampling 
     inc_mod: int. Model resamlping
     verbose: int, print shit?
-        
+    resamp: bool. Resample inversion result to original grid, ref inc_mod (default is True)    
+    
     Programmed:
         Ketil Hokstad, 26. September 2018 (Matlab)
         Ketil Hokstad, 14. December 2020    
-        Ketil Hokstad, 13. January 2021    
+        Ketil Hokstad, 13. January 2021
+        Ketil Hokstad,  6. August 2025    
     """
     
     # Get kwargs
@@ -94,6 +96,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     ltap = kwargs.get('ltap', 0)
     inc_data = kwargs.get('inc_data', 1)
     inc_mod = kwargs.get('inc_mod', 1)
+    resamp = kwargs.get('resamp', True)
     
     # Data scaling (to/from SI units)
     to_SI   = kwargs.get('to_SI', mag.to_SI)
@@ -113,7 +116,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     ny_chunk = int(np.ceil(model.ny/nfl))
 
     if verbose>0:
-        print('GravMag inversion')
+        print('Map inversion')
         print(' o gf_max = {:d}'.format(int(gf_max)))
         print(' o nnn = {}'.format(nnn))
         print(' o nfl = {:d}'.format(nfl))
@@ -123,9 +126,10 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
         print(' o lam  = {}'.format(lam))
         print(' o inc_data = {}'.format(inc_data))
         print(' o inc_mod  = {}'.format(inc_mod))
+        print(' o resamp = {}'.format(resamp))
         print(' o args:')
         for kk, arg in enumerate(args):
-            print('   - kk, arg = {}, {}'.format(kk, arg))
+            print(f'   - kk, arg = {kk}, {arg}')
 
     # print('Then return ...')
     # return -1, -1
@@ -233,9 +237,12 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             synt.rms_err = rms_err
 
     # Resample the output to input grids:
-    kh_ut = kh.resample(inc_mod, do_all=True, verbose=verbose)
     synt_ut = synt.resample(inc_data, do_all=True, verbose=verbose)
-
+    if resamp:
+        kh_ut = kh.resample(inc_mod, do_all=True, verbose=verbose)
+    else:
+        kh_ut = kh
+    
     return kh_ut, synt_ut
 
 def nans_like(aa):

@@ -152,107 +152,111 @@ def jacobi(vr, smag, vm, vt_e, vt_m, eps):
 #--------------------------------------------------
 
 # Define function
-def green_ij(vr, vm_1, vm_2, vt_e, vt_m, eps):
-    """ Compute one element of the magnetic Green's function matrix.
+# def green_ij(vr, vm_1, vm_2, vt_e, vt_m, eps):
+#     """ Compute one element of the magnetic Green's function matrix.
  
-    The function depends only on geometry, i.e. x, y, z of magnetic 
-    anomaly and receiver, respectively. 
-    
-    Parameters
-    ----------
-    vr: float, 3C vectors, shape=(3)
-        Co-ordinates of the observation points
-    vm_1 float, 3C vector, shape=(3)
-        Horizontal coordinates and top of anomaly points
-    vm_2: float, 3C vector, shape=(3)
-        Horizontal coordinates and base of anomaly points
-    vt_e: float, 3C vector, shape=3)
-        Direction of earth magnetic background field (tangent vector)
-    vt_m: float, 3C vector, shape=(3)
-        Direction of magnetization, currently va=vt
-    eps: float, stabilization
-    
-    Returns
-    -------
-    grn_ij: float
-        One element of the magnetic Green's function matrix
+#     OBSOLETE, NOT USED
 
-    Programmed: 
-        Ketil Hokstad, 13. December 2017 (Matlab)
-        Ketil Hokstad,  9. December 2020  
-    """
+#     The function depends only on geometry, i.e. x, y, z of magnetic 
+#     anomaly and receiver, respectively. 
+    
+#     Parameters
+#     ----------
+#     vr: float, 3C vectors, shape=(3)
+#         Co-ordinates of the observation points
+#     vm_1 float, 3C vector, shape=(3)
+#         Horizontal coordinates and top of anomaly points
+#     vm_2: float, 3C vector, shape=(3)
+#         Horizontal coordinates and base of anomaly points
+#     vt_e: float, 3C vector, shape=3)
+#         Direction of earth magnetic background field (tangent vector)
+#     vt_m: float, 3C vector, shape=(3)
+#         Direction of magnetization, currently va=vt
+#     eps: float, stabilization
+    
+#     Returns
+#     -------
+#     grn_ij: float
+#         One element of the magnetic Green's function matrix
+
+#     Programmed: 
+#         Ketil Hokstad, 13. December 2017 (Matlab)
+#         Ketil Hokstad,  9. December 2020  
+#     """
             
-    # Compute Green's function element
-    vp = vm_1 - vr
-    vq = vm_2 - vr
+#     # Compute Green's function element
+#     vp = vm_1 - vr
+#     vq = vm_2 - vr
 
-    p1 = np.sqrt(dot(vp,vp) + eps)
-    p2 = p1*p1  
-    p3 = p1*p2
+#     p1 = np.sqrt(dot(vp,vp) + eps)
+#     p2 = p1*p1  
+#     p3 = p1*p2
     
-    q1 = np.sqrt(dot(vq,vq) + eps)
-    q2 = q1*q1 
-    q3 = q1*q2 
+#     q1 = np.sqrt(dot(vq,vq) + eps)
+#     q2 = q1*q1 
+#     q3 = q1*q2 
  
-    pw1 = -(vt_m[2] + dot(vt_m,vp)/p1)*(vt_e[2] + dot(vt_e,vp)/p1)/((vp[2]+p1)**2) 
-    pw2 =  (dot(vt_m,vt_e)/p1 - (dot(vt_m,vp))*(dot(vt_e,vp))/p3)/(vp[2]+p1)
+#     pw1 = -(vt_m[2] + dot(vt_m,vp)/p1)*(vt_e[2] + dot(vt_e,vp)/p1)/((vp[2]+p1)**2) 
+#     pw2 =  (dot(vt_m,vt_e)/p1 - (dot(vt_m,vp))*(dot(vt_e,vp))/p3)/(vp[2]+p1)
     
-    qw1 = -(vt_m[2] + dot(vt_m,vq)/q1)*(vt_e[2] + dot(vt_e,vq)/q1)/((vq[2]+q1)**2) 
-    qw2 =  (dot(vt_m,vt_e)/q1 - (dot(vt_m,vq))*(dot(vt_e,vq))/q3)/(vq[2]+q1)
+#     qw1 = -(vt_m[2] + dot(vt_m,vq)/q1)*(vt_e[2] + dot(vt_e,vq)/q1)/((vq[2]+q1)**2) 
+#     qw2 =  (dot(vt_m,vt_e)/q1 - (dot(vt_m,vq))*(dot(vt_e,vq))/q3)/(vq[2]+q1)
 
-    rf  = mu0/(4*np.pi)
-    grn_ij = rf*(qw1 + qw2 - pw1 - pw2)
+#     rf  = mu0/(4*np.pi)
+#     grn_ij = rf*(qw1 + qw2 - pw1 - pw2)
     
-    return grn_ij
+#     return grn_ij
 
-#-----------------------------------------------------------
-#   Compute Jacobian matrix element wrt z2, , ONE ELEMENT
-#-----------------------------------------------------------
+# #-----------------------------------------------------------
+# #   Compute Jacobian matrix element wrt z2, , ONE ELEMENT
+# #-----------------------------------------------------------
 
 # Define function
-def jacobi_ij(vr, smag, vm, vt_e, vt_m, eps):
-    """ Compute one element of the magnetic Jacobian wrt z2 for the current model.
+# def jacobi_ij(vr, smag, vm, vt_e, vt_m, eps):
+#     """ Compute one element of the magnetic Jacobian wrt z2 for the current model.
+
+#     OBSOLETE, NOT USED
  
-    The Jacobian wrt base source layer z2 is  J = (dQ/dz2)*M
+#     The Jacobian wrt base source layer z2 is  J = (dQ/dz2)*M
     
-    Parameters
-    ----------
-    vr: float, 3C vectors, shape=(3)
-        Co-ordinates of the observation points
-    smag: float
-        Scalar magnetization of the anomaly
-    vm: float, 3C vector, shape=(3)
-        Horizontal coordinates and base of anomaly points
-    vt_e: float, 3C vector, shape=3)
-        Direction of earth magnetic background field (tangent vector)
-    vt_m: float, 3C vector, shape=(3)
-        Direction of magnetization, currently va=vt
-    eps: float, stabilization
+#     Parameters
+#     ----------
+#     vr: float, 3C vectors, shape=(3)
+#         Co-ordinates of the observation points
+#     smag: float
+#         Scalar magnetization of the anomaly
+#     vm: float, 3C vector, shape=(3)
+#         Horizontal coordinates and base of anomaly points
+#     vt_e: float, 3C vector, shape=3)
+#         Direction of earth magnetic background field (tangent vector)
+#     vt_m: float, 3C vector, shape=(3)
+#         Direction of magnetization, currently va=vt
+#     eps: float, stabilization
     
-    Returns
-    -------
-    jac_ij: float
-        One element of the magnetic Jacobian wrt z2
+#     Returns
+#     -------
+#     jac_ij: float
+#         One element of the magnetic Jacobian wrt z2
 
-    Programmed: 
-        Ketil Hokstad,  7. January 2020  
-    """
+#     Programmed: 
+#         Ketil Hokstad,  7. January 2020  
+#     """
     
-    # Compute Jacobian element
-    vq = vm - vr
+#     # Compute Jacobian element
+#     vq = vm - vr
     
-    q1 = np.sqrt(dot(vq,vq) + eps)
-    q2 = q1*q1 
-    q3 = q1*q2 
-    q5 = q3*q2
+#     q1 = np.sqrt(dot(vq,vq) + eps)
+#     q2 = q1*q1 
+#     q3 = q1*q2 
+#     q5 = q3*q2
     
-    w1 = -dot(vt_m,vt_e)/q3
-    w2 = 3*(dot(vt_m,vq))*(dot(vt_e,vq))/q5
+#     w1 = -dot(vt_m,vt_e)/q3
+#     w2 = 3*(dot(vt_m,vq))*(dot(vt_e,vq))/q5
 
-    rf  = mu0/(4*np.pi)
-    jac_ij = rf*(w1 + w2)*smag
+#     rf  = mu0/(4*np.pi)
+#     jac_ij = rf*(w1 + w2)*smag
     
-    return jac_ij
+#     return jac_ij
 
 
             

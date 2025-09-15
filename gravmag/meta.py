@@ -344,7 +344,7 @@ class MapData:
         
         # QC plot
         if kplot:
-            fig, axs = plt.subplots(1,2,figsize=(12,6))
+            fig, axs = plt.subplots(1,2,figsize=(8,4))
             #inc, dec = mod_geom.inc, mod_geom.dec
             #fig.suptitle('Test {}: dx=dy={}, z2-z1={}, zr={}'.format(ktest, mod_geom.dx, delz, zr), fontsize=14)
             
@@ -356,7 +356,7 @@ class MapData:
             ax.set_xlabel('Normalized radial wavenumber')
             ax.set_xlim(0,np.max(gkr)/k_nyq)
             ax.set_ylim(np.min(Y01), np.max(Y02))
-            ax.set_title('z_base = {}'.format(z_base))
+            ax.set_title(f'z_base = {z_base:.0f}m')
 
             ax = axs[1]
             ax.scatter(X0/k_nyq, Y01 , c='b')
@@ -366,8 +366,10 @@ class MapData:
             ax.set_xlabel('Normalized radial wavenumber')
             ax.set_xlim(0,np.max(gkr)/k_nyq)
             ax.set_ylim(np.min(Y01), np.max(Y02))
-            ax.set_title('z_top = {}'.format(z_top))
+            ax.set_title(f'z_top = {z_top:.0f}m')
         
+            fig.tight_layout(pad=1.0)
+
         else:
             fig=0
             

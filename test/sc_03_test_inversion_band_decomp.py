@@ -24,7 +24,7 @@ from gravmag.inversion import image_stack
 # Run inversion test
 #------------------------------
 
-block = True
+block = False
 
 pkl = '../Data/pkl/'
 png = 'png/'
