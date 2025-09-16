@@ -18,7 +18,7 @@ d2r, r2d = np.pi/180, 180/np.pi
 #--------------------------------------------------
 
 # Scalar product for 3C vectors
-dot = lambda a, b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+# dot = lambda a, b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 
 #--------------------------------------------------
 #   Compute Greens function matrix
@@ -53,12 +53,14 @@ def green(vr, vm_1, vm_2, eps):
         Ketil Hokstad, 13. December 2017 (Matlab)
         Ketil Hokstad,  9. December 2020  
         Ketil Hokstad, 13. January  2021  
-        Ketil Hokstad, 15. September 2025 (FTG, Gzz)
+        Ketil Hokstad, 15. September 2025 (FTG; Gzz)
     """
             
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     
+    print(f'ftg.green: eps = {eps}')
+
     # Compute Green's function array
     grn = np.zeros([nr,nm], dtype=float)
     for jj in range(nr):       # Data space
@@ -67,19 +69,19 @@ def green(vr, vm_1, vm_2, eps):
             vp = vm_1[ii,:] - vr[jj,:]
             vq = vm_2[ii,:] - vr[jj,:]
         
-            p1 = np.sqrt(dot(vp,vp) + eps) # r (distance from receivers to top horizon)
-            p2 = p1*p1                     # r**2
+            p2 = vp[0]*vp[0] + vp[1]*vp[1] + vp[2]*vp[2] + eps
+            p1 = np.sqrt(p2)               # r (distance from receivers to top horizon)
             p3 = p1*p2                     # r**3
             
-            q1 = np.sqrt(dot(vq,vq) + eps) # q (distance from receivers to base horizon)
-            q2 = q1*q1                     # q**2
+            q2 = vq[0]*vq[0] + vq[1]*vq[1] + vq[2]*vq[2] + eps
+            q1 = np.sqrt(q2)               # q (distance from receivers to base horizon)
             q3 = q1*q2                     # q**3
          
             pw1 = -((1.0 + vp[2]/p1)**2)/((vp[2]+p1)**2) 
             pw2 =  (1.0/p1 - (vp[2]**2)/p3) /(vp[2]+p1)
 
             qw1 = -((1.0 + vq[2]/q1)**2)/((vq[2]+q1)**2) 
-            qw2 =  (1.0/q1 - (vq[2]**2)/q3) /(qp[2]+q1)
+            qw2 =  (1.0/q1 - (vq[2]**2)/q3) /(vq[2]+q1)
 
             grn[jj,ii] = gamma*(qw1 + qw2 - pw1 - pw2)
     

@@ -7,6 +7,7 @@ Created on Wed Dec  9 14:19:11 2020
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from inliner import inline
 
 #-----------------------
 # Some constants
@@ -23,6 +24,10 @@ d2r, r2d = np.pi/180, 180/np.pi
 
 # Scalar product for 3C vectors
 dot = lambda a, b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+
+# def dot(a, b):
+#     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+
 
 #--------------------------------------------------
 #   Compute Greens function matrix
