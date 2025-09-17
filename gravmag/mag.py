@@ -7,7 +7,6 @@ Created on Wed Dec  9 14:19:11 2020
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from inliner import inline
 
 #-----------------------
 # Some constants
@@ -67,6 +66,8 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps):
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     
+    print(f'mag.green: vt_e, eps = {vt_e}, {eps}')
+
     # Compute Green's function array
     grn = np.zeros([nr,nm], dtype=float)
     for jj in range(nr):       # Data space
@@ -93,6 +94,75 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps):
             grn[jj,ii] = rf*(qw1 + qw2 - pw1 - pw2)
     
     return grn
+
+#--------------------------------------------------
+#   Compute Greens function matrix
+#--------------------------------------------------
+
+def green_rtp(vr, vm_1, vm_2, eps):
+    """ Compute the magnetic Green's function for RTP data. 
+
+    *RTP = Reduction to pole (the magnetic background filed is normal incidence)
+    
+    This function is faster than the general function bacuase all
+    scalar products and calls to the dot(a,b) function are eliminated. 
+ 
+    The function depends only on geometry, i.e. x, y, z of magnetic 
+    anomaly and receiver, respectively. 
+    
+    Parameters
+    ----------
+    vr: float, array of 3C vectors, shape=(nr,3)
+        Co-ordinates of the observation points
+    vm_1 float, array of 3C vector, shape=(nm,3)
+        Horizontal coordinates and top of anomaly points
+    vm_2: float, array of 3C vector, shape=(nm,3)
+        Horizontal coordinates and base of anomaly points
+    eps: float, stabilization (avoid division by zero)
+    
+    Returns
+    -------
+    grn_rtp: float
+        Aray of the magnetic Green's function matrix
+
+    Programmed: 
+        Ketil Hokstad, 13. December 2017 (Matlab)
+        Ketil Hokstad,  9. December 2020  
+        Ketil Hokstad, 13. January  2021  
+        Ketil Hokstad, 17. September 2025 (RTP)  
+    """
+            
+    nr = vr.shape[0]
+    nm = vm_2.shape[0]
+    
+    print(f'mag.green_rtp: eps = {eps}')
+
+    # Compute Green's function array
+    grn_rtp = np.zeros([nr,nm], dtype=float)
+    for jj in range(nr):       # Data space
+        for ii in range(nm):   # Model space
+    
+            vp = vm_1[ii,:] - vr[jj,:]
+            vq = vm_2[ii,:] - vr[jj,:]
+        
+            p2 = vp[0]*vp[0] + vp[1]*vp[1] + vp[2]*vp[2] + eps
+            p1 = np.sqrt(p2)               # r (distance from receivers to top horizon)
+            p3 = p1*p2                     # r**3
+            
+            q2 = vq[0]*vq[0] + vq[1]*vq[1] + vq[2]*vq[2] + eps
+            q1 = np.sqrt(q2)               # q (distance from receivers to base horizon)
+            q3 = q1*q2                     # q**3
+         
+            pw1 = -(1 + vp[2]/p1)*(1 + vp[2]/p1)/((vp[2]+p1)**2) 
+            pw2 =  (1/p1 - vp[2]*vp[2]/p3)/(vp[2]+p1)
+            
+            qw1 = -(1 + vq[2]/q1)*(1 + vq[2]/q1)/((vq[2]+q1)**2) 
+            qw2 =  (1/q1 - vq[2]*vq[2]/q3)/(vq[2]+q1)
+
+            rf  = mu0/(4*np.pi)
+            grn_rtp[jj,ii] = rf*(qw1 + qw2 - pw1 - pw2)
+    
+    return grn_rtp
 
 #--------------------------------------------------
 #   Compute Jacobian matrix wrt z2

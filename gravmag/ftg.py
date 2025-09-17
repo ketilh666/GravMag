@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-print('ftg does not exist')
-
 #-----------------------
 # Some constants
 #-----------------------
@@ -12,13 +10,6 @@ gamma = 6.67430e-11 # gravity constant [m**3/(kg s**2)]
 to_Eo, from_Eo = 1.0e9, 1.0e-9 # from SI to Eotvos
 from_SI, to_SI = 1.0e9, 1.0e-9 # from Eotvos to SI
 d2r, r2d = np.pi/180, 180/np.pi
-
-#--------------------------------------------------
-# Lambda function to compute scalar product
-#--------------------------------------------------
-
-# Scalar product for 3C vectors
-# dot = lambda a, b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 
 #--------------------------------------------------
 #   Compute Greens function matrix
@@ -38,10 +29,6 @@ def green(vr, vm_1, vm_2, eps):
         Horizontal coordinates and top of anomaly points
     vm_2: float, array of 3C vector, shape=(nm,3)
         Horizontal coordinates and base of anomaly points
-    vt_e: float, 3C vector, shape=3)
-        Direction of earth magnetic background field (tangent vector)
-    vt_m: float, 3C vector, shape=(3)
-        Direction of magnetization, currently va=vt
     eps: float, stabilization
     
     Returns
