@@ -217,7 +217,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             magn_it[it], rank_it[it], cond_it[it] = marq_leven(LL, dd, lam)
             tiles['rel_rank'][iyc, ixc] = rank_it[it]/LL.shape[1]
             tiles['cond'][iyc, ixc] = cond_it[it]
-            print(f' * rank, nm, rank/ndim, cond = {rank_it[it]}, {LL.shape[1]}, {rank_it[it]/LL.shape[1]}, {cond_it[it]:.0f}')
+            print(f' * rank, nm, rank/nm, cond = {rank_it[it]}, {LL.shape[1]}, {rank_it[it]/LL.shape[1]}, {cond_it[it]:.0f}')
             
             # Non-linear GN inversion: Joint mag and zbase update
             nh = magn_it[0].shape[0]
@@ -255,8 +255,6 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             kh.zb0[jy1:jy2+1, jx1:jx2+1][jnd] = base_it[ 0].flatten()
             kh.zbn[jy1:jy2+1, jx1:jx2+1][jnd] = base_it[it].flatten()
             
-            # wold = synt.tma[ky1:ky2+1, kx1:kx2+1][knd]
-            # synt.tma[ky1:ky2+1, kx1:kx2+1][knd] = wold + from_SI*synt_it[it].flatten()
             synt.tma[ky1:ky2+1, kx1:kx2+1][knd] += from_SI*synt_it[it].flatten()
             synt.rms_err += rms_err[-1]
 

@@ -126,13 +126,13 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         # Snap Greens function matrix to model grid?
         if snap:
             rat = (np.max(model.z[0])-z)/(model.dx)
-            rpow = np.floor(1/(2*rat))
-            rscl = 2**rpow
-            dx_snp= np.min([rscl*geom.dx, model.dx])
+            if   rat >= 0.75: dx_snp = geom.dx
+            elif rat >= 0.50: dx_snp = model.dx/2
+            else:            dx_snp = model.dx
         else:
             dx_snp = 1.0
-        # print(f'rat = {rat}, rpow={rpow}, dx_snp={dx_snp}')
-        # dx_snp = 1.0
+            
+        print(f'rat = {rat}, dx_snp={dx_snp}')
 
         # Data space:
         synt = MapData(geom.x, geom.y, z)
