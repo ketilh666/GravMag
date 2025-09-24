@@ -30,8 +30,9 @@ pkl = '../Data/pkl/'
 png = 'png/'
 if not os.path.isdir(png): os.mkdir(png)
 
-ntest = 4
-for ktest in range(0,1+ntest):
+ntest = 1
+for ktest in range(0,ntest):
+    print(ktest)
     
     gscl = 250. # sale of the problem (grid spacing)
     if   ktest == 0: inc, dec, zr = 90,   0,  -2*gscl
@@ -90,19 +91,24 @@ for ktest in range(0,1+ntest):
     
     # Initial value for M is zero => first iter is the linear inversion:
     tic = time.perf_counter()
-    mm, rank = marq_leven(AA, dd, lam)
+    mm, rank, cond = marq_leven(AA, dd, lam)
     inver.magn = mm.reshape(inver.ny, inver.nx)
     toc = time.perf_counter()
     time_inv = toc - tic
-    
+
+    # Synt data in inverted model
+    mm2 = inver.magn.reshape(model.nx*model.ny,1)
+    dd2 = AA.dot(mm)
+    synt_tma = to_nT*dd2.reshape(data.ny, data.nx)
+
     # Just for printing and potting
     ATA = AA.T.dot(AA)
     JJ = np.diag(ATA.diagonal())
     rank0 = np.linalg.matrix_rank(ATA)
 
     ngf = vr.shape[0]*vm_1.shape[0]
-    print('ngf = {}, time_gf = {:.1f}s, time_inv = {:.3f}s'.format(ngf, time_gf, time_inv))
-    print('Test {}: rank = {}, {}'.format(ktest, rank0,rank))
+    print(f'ngf = {ngf}, time_gf = {time_gf:.1f}s, time_inv = {time_inv:.3f}s')
+    print(f'Test {ktest}: rank0, rank, cond = {rank0}, {rank}, {cond:.1f}')
 
     #-------------------------------
     #  PLot results
@@ -111,8 +117,9 @@ for ktest in range(0,1+ntest):
     mmax = [5,3.5,2.5,1.9,5,5]
     
     interp = 'bicubic'
+    interp = 'None'
     # PLot data and inversion result
-    fig, (ax, bx, cx) = plt.subplots(1,3,figsize=(18,6)) 
+    fig, (ax, bx, cx, sx) = plt.subplots(1,4,figsize=(18,5)) 
     fig.suptitle('Test {}: dx=dy={}, z2-z1={}, zr={}'.format(ktest, gscl, 2*gscl, zr), fontsize=14)
 
     xtnt = [data.y[0], data.y[-1], data.x[0], data.x[-1]]
@@ -142,6 +149,16 @@ for ktest in range(0,1+ntest):
     cm.ScalarMappable.set_clim(im)
     cbar = cx.figure.colorbar(im, ax=cx, shrink=0.8); 
     cx.set_title('Test {}: ATA + lam*diag(ATA)'.format(ktest))
+
+    im = sx.imshow(synt_tma.T, origin='lower', extent=xtnt, interpolation=interp)
+    cb = sx.figure.colorbar(im, ax=sx, shrink=0.9) 
+#    sx.set_xlim(data.y[0], data.y[-1])
+#    sx.set_ylim(data.x[0], data.x[-1])
+    sx.set_xlim(inver.y[0], inver.y[-1])
+    sx.set_ylim(inver.x[0], inver.x[-1])
+    sx.set_ylabel('northing x [m]')
+    sx.set_xlabel('easting y [m]')
+    sx.set_title('Mag GF: inc={}deg, dec={}deg'.format(inc, dec))
 
     fig.savefig(png+'gscl_'+str(int(gscl))+'_test_'+str(ktest)+'zoom_.png')
     plt.show(block=block)        

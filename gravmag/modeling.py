@@ -56,6 +56,7 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     inc_mod: int. Model resamlping
     verbose: int, print shit?
     z_list: list or np.array. List of new datums (default is z_list = geom.z)
+    snap: bool. Snap to grid? (default is snap=True)
 
     Programmed:
         Ketil Hokstad, 6. August 2025    
@@ -68,15 +69,17 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     ltap = kwargs.get('ltap', 0)
     inc_data = kwargs.get('inc_data', 1)
     inc_mod = kwargs.get('inc_mod', 1)
+    resamp = kwargs.get('resamp', True)
     z_list  = kwargs.get('z_list', [zj[0,0] for zj in geom_in.z])
-    
+    snap = kwargs.get('snap', True)
+
     # geom scaling (to/from SI units)
     to_SI   = kwargs.get('to_SI', mag.to_SI)
     from_SI = kwargs.get('from_SI', 1.0/to_SI)    
 
     # Decimate geom and model
-    geom  = geom_in.decimate(inc_data, do_all=True, verbose=verbose)
-    model = model_in.decimate(inc_mod, do_all=True, verbose=verbose)
+    geom  = geom_in.decimate(inc_data, do_all=True, verbose=0)
+    model = model_in.decimate(inc_mod, do_all=True, verbose=0)
 
     # Compute roll along supergrid: NB! nfl refers to the model grid
     # rnum = geom.dx*geom.dy*gf_max
@@ -101,6 +104,7 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         print(' o args:')
         for kk, arg in enumerate(args):
             print('   - kk, arg = {}, {}'.format(kk, arg))
+        print(f' ø nx, dx = {geom.nx}, {geom.dx}')
 
     # Filters to remove nan and inf
     jnd = np.isfinite(model.magn)
@@ -119,6 +123,17 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     synt_ut = [None for zj in z_list]
     for jj, z in enumerate(z_list):
         
+        # Snap Greens function matrix to model grid?
+        if snap:
+            rat = (np.max(model.z[0])-z)/(model.dx)
+            rpow = np.floor(1/(2*rat))
+            rscl = 2**rpow
+            dx_snp= np.min([rscl*geom.dx, model.dx])
+        else:
+            dx_snp = 1.0
+        # print(f'rat = {rat}, rpow={rpow}, dx_snp={dx_snp}')
+        # dx_snp = 1.0
+
         # Data space:
         synt = MapData(geom.x, geom.y, z)
         synt.tma = np.zeros_like(synt.z[0])
@@ -127,13 +142,19 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
                         synt.gy[knd], 
                         synt.z[0][knd]]).T
         
-        LL = ds*func_grn(vr, vm_1, vm_2, *args)
+        LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=dx_snp)
         tma = LL.dot(model.magn[jnd])
         synt.tma[knd] = from_SI*tma.flatten()
+
+        fig = plt.figure()
+        plt.imshow(LL)
+        plt.axis('auto')
+        plt.title(f'synt LL: z={z}')
+        fig.savefig(f'Greens_Matrix_z_{z:.0f}_inc_mod_{inc_mod}_inc_data_{inc_data}.png')
         
-        synt_ut[jj] = synt.resample(inc_data, do_all=True, verbose=verbose)
+        if resamp:
+            synt_ut[jj] = synt.resample(inc_data, do_all=True, verbose=0)
+        else: 
+            synt_ut[jj] = synt
 
     return synt_ut
-
-
-

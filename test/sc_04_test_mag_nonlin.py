@@ -105,6 +105,7 @@ for ktest in range(k_frst,k_last+1):
     base_it = [None for ii in range(niter+1)]   # Inverted base source layer
     synt_it = [None for ii in range(niter+1)]   # Synt data from current model
     rank_it = [None for ii in range(niter+1)]   # Rank of pseudo inverse
+    cond_it = [None for ii in range(niter+1)]   # Rank of pseudo inverse
     synt.rms_err = [None for ii in range(niter+1)]   # RMS error of current model
     
     # Compute once and for all:
@@ -125,7 +126,7 @@ for ktest in range(k_frst,k_last+1):
     base_it[it] = inver.z[1].reshape(-1,1)
     vm_2 = np.vstack([gx_flat, gy_flat, inver.z[1].flatten()]).T
     LL = ds*green(vr, vm_1, vm_2, vt_e, vt_m, eps)
-    magn_it[it], rank_it[it] = marq_leven(LL, dd, lam)
+    magn_it[it], rank_it[it], cond_it[it] = marq_leven(LL, dd, lam)
     base_it[it] = inver.z[1].reshape(-1,1) # Not updated, same is initial
     
     #----------------------------------------------------
@@ -150,7 +151,7 @@ for ktest in range(k_frst,k_last+1):
         JJ = np.hstack((LL, KK)) # The full Jacobian
         
         # Compute model update (mag and zb)
-        delm, rank_it[it+1] = marq_leven(JJ, deld, lam)
+        delm, rank_it[it+1], cond_it[it+1] = marq_leven(JJ, deld, lam)
         magn_it[it+1] = magn_it[it] + delm[:nh]
         base_it[it+1] = base_it[it] + delm[nh:] 
 

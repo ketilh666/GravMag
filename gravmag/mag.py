@@ -24,15 +24,11 @@ d2r, r2d = np.pi/180, 180/np.pi
 # Scalar product for 3C vectors
 dot = lambda a, b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
 
-# def dot(a, b):
-#     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
-
-
 #--------------------------------------------------
 #   Compute Greens function matrix
 #--------------------------------------------------
 
-def green(vr, vm_1, vm_2, vt_e, vt_m, eps):
+def green(vr, vm_1, vm_2, vt_e, vt_m, eps, **kwargs):
     """ Compute the magnetic Green's function matrix.
  
     The function depends only on geometry, i.e. x, y, z of magnetic 
@@ -52,6 +48,10 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps):
         Direction of magnetization, currently va=vt
     eps: float, stabilization
     
+    kwargs:
+    dx_snp: float. Grid spacing of magnetization model grid
+    dy_snp: float. Grid spacing of magnetization model model
+
     Returns
     -------
     grn: float
@@ -61,20 +61,28 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps):
         Ketil Hokstad, 13. December 2017 (Matlab)
         Ketil Hokstad,  9. December 2020  
         Ketil Hokstad, 13. January  2021  
+        Ketil Hokstad, 24. September 2024 (snap to grid)
     """
             
+    dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
+
+    vr_snp = np.ones_like(vr)
+    vr_snp[:,0] = dx_snp*np.round(vr[:,0]/dx_snp)
+    vr_snp[:,1] = dy_snp*np.round(vr[:,1]/dy_snp)
+    vr_snp[:,2] = vr[:,2]
+
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     
-    print(f'mag.green: vt_e, eps = {vt_e}, {eps}')
+    print(f'mag.green: dx_snp, vt_e, eps = {dx_snp}, {vt_e}, {eps}')
 
     # Compute Green's function array
     grn = np.zeros([nr,nm], dtype=float)
     for jj in range(nr):       # Data space
         for ii in range(nm):   # Model space
     
-            vp = vm_1[ii,:] - vr[jj,:]
-            vq = vm_2[ii,:] - vr[jj,:]
+            vp = vm_1[ii,:] - vr_snp[jj,:]
+            vq = vm_2[ii,:] - vr_snp[jj,:]
         
             p1 = np.sqrt(dot(vp,vp) + eps)
             p2 = p1*p1  
@@ -99,7 +107,7 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps):
 #   Compute Greens function matrix
 #--------------------------------------------------
 
-def green_rtp(vr, vm_1, vm_2, eps):
+def green_rtp(vr, vm_1, vm_2, eps, **kwargs):
     """ Compute the magnetic Green's function for RTP data. 
 
     *RTP = Reduction to pole (the magnetic background filed is normal incidence)
@@ -125,25 +133,37 @@ def green_rtp(vr, vm_1, vm_2, eps):
     grn_rtp: float
         Aray of the magnetic Green's function matrix
 
+    kwargs:
+    dx_snp: float. Grid spacing of magnetization model grid
+    dy_snp: float. Grid spacing of magnetization model model
+
     Programmed: 
         Ketil Hokstad, 13. December 2017 (Matlab)
         Ketil Hokstad,  9. December 2020  
         Ketil Hokstad, 13. January  2021  
         Ketil Hokstad, 17. September 2025 (RTP)  
+        Ketil Hokstad, 24. September 2024 (snap to grid)
     """
             
+    dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
+
+    vr_snp = np.ones_like(vr)
+    vr_snp[:,0] = dx_snp*np.round(vr[:,0]/dx_snp)
+    vr_snp[:,1] = dy_snp*np.round(vr[:,1]/dy_snp)
+    vr_snp[:,2] = vr[:,2]
+
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     
-    print(f'mag.green_rtp: eps = {eps}')
+    print(f'mag.green_rtp: dx_snp, eps = {dx_snp}, {eps}')
 
     # Compute Green's function array
     grn_rtp = np.zeros([nr,nm], dtype=float)
     for jj in range(nr):       # Data space
         for ii in range(nm):   # Model space
     
-            vp = vm_1[ii,:] - vr[jj,:]
-            vq = vm_2[ii,:] - vr[jj,:]
+            vp = vm_1[ii,:] - vr_snp[jj,:]
+            vq = vm_2[ii,:] - vr_snp[jj,:]
         
             p2 = vp[0]*vp[0] + vp[1]*vp[1] + vp[2]*vp[2] + eps
             p1 = np.sqrt(p2)               # r (distance from receivers to top horizon)
@@ -152,7 +172,7 @@ def green_rtp(vr, vm_1, vm_2, eps):
             q2 = vq[0]*vq[0] + vq[1]*vq[1] + vq[2]*vq[2] + eps
             q1 = np.sqrt(q2)               # q (distance from receivers to base horizon)
             q3 = q1*q2                     # q**3
-         
+        
             pw1 = -(1 + vp[2]/p1)*(1 + vp[2]/p1)/((vp[2]+p1)**2) 
             pw2 =  (1/p1 - vp[2]*vp[2]/p3)/(vp[2]+p1)
             
@@ -169,7 +189,7 @@ def green_rtp(vr, vm_1, vm_2, eps):
 #--------------------------------------------------
 
 # Define function
-def jacobi(vr, smag, vm, vt_e, vt_m, eps):
+def jacobi(vr, smag, vm, vt_e, vt_m, eps, **kwargs):
     """ Compute magnetic Jacobian matrix wrt z2 for the current model.
  
     The Jacobian wrt base source layer z2 is  J = (dQ/dz2)*M
@@ -195,17 +215,27 @@ def jacobi(vr, smag, vm, vt_e, vt_m, eps):
 
     Programmed: 
         Ketil Hokstad,  7. January 2020  
-    """
+        Ketil Hokstad, 24. September 2024 (snap to grid)
+    """    
     
+    dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
+
+    vr_snp = np.ones_like(vr)
+    vr_snp[:,0] = dx_snp*np.round(vr[:,0]/dx_snp)
+    vr_snp[:,1] = dy_snp*np.round(vr[:,1]/dy_snp)
+    vr_snp[:,2] = vr[:,2]
+
     nr = vr.shape[0]
-    nm = vm.shape[0]
+    nm = vm_2.shape[0]
     
+    print(f'mag.jacobi: dx_snp, vt_e, eps = {dx_snp}, {vt_e}, {eps}')
+
     # Compute Jacobian matrix wrt z_base
     jac = np.zeros([nr,nm], dtype=float)
     for jj in range(nr):       # Data space
         for ii in range(nm):   # Model space
 
-            vq = vm[ii,:] - vr[jj,:]
+            vq = vm[ii,:] - vr_snp[jj,:]
             
             q1 = np.sqrt(dot(vq,vq) + eps)
             q2 = q1*q1 

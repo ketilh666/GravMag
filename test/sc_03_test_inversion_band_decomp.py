@@ -112,9 +112,9 @@ for jj in range(len(rk)):
     dmin, dmax = [-10,-60, -100], [5, 30, 300]
     mmin, mmax = [-6,-2, -1, -5], [3, 1, 2, 3]
     
-    data, kh = data_band[jj], inver[jj]
+    data, kh, sd = data_band[jj], inver[jj], synt[jj]
     data.tma = np.real(data.tma)
-    fig, (ax, bx) = plt.subplots(1,2,figsize=(12,6)) 
+    fig, (ax, bx, cx) = plt.subplots(1,3,figsize=(18,6)) 
     zr, delz = data.z[0][0,0], kh.z[1][0,0] - kh.z[0][0,0] 
     fig.suptitle('Band {}: dx=dy={}, z2-z1={}, zr={}'.format(jj, kh.dx, delz, zr), fontsize=14)
 
@@ -137,6 +137,15 @@ for jj in range(len(rk)):
     bx.set_ylabel('northing x [m]')
     bx.set_xlabel('easting y [m]')
     bx.set_title('Mag inversion [A/m]: inc={}deg, dec={}deg'.format(inc, dec))
+
+    im = cx.imshow(sd.tma.T, origin='lower', extent=xtnt, cmap=cm.jet, interpolation='bicubic')
+    if clim_on: cm.ScalarMappable.set_clim(im,vmin=dmin[jj],vmax=dmax[jj])
+    cb = ax.figure.colorbar(im, ax=cx, shrink=0.9) 
+    ax.set_xlim(sd.y[0], sd.y[-1])
+    ax.set_ylim(sd.x[0], sd.x[-1])
+    ax.set_ylabel('northing x [m]')
+    ax.set_xlabel('easting y [m]')
+    ax.set_title('Synt data [nT]: inc={}deg, dec={}deg'.format(inc, dec))
 
     fig.savefig(png+'test'+str(ktest)+'_band'+str(jj)+'_inv_2layer_varz1.png')
     

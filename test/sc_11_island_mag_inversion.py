@@ -88,11 +88,12 @@ fig.savefig(png+'Elevation_Distribution_in_AOI.png')
 lam_dict = {0: 1e-3, 1: 1e-3, 2: 1e-3, 3: 1e-3}              # Marquardt-Levenberg parameter
 
 # Increments, running inversion on sparse grids for low k
-inc_data, inc_mod = [8, 4, 2], [16, 8, 4]
+# inc_data, inc_mod = [8, 4, 2], [16, 8, 4]
+inc_data, inc_mod = [4, 2, 1], [16, 8, 4]
 z_add, rk = [7480, 4660, 1980], [0.0625, 0.125, 0.25]
 
 niter = 0     # No Gauss-Newton iter
-nband_run = 3 # Run a limited nuber of wavenumber bands
+nband_run = 2 # Run a limited nuber of wavenumber bands
 gf_max = 1e7  # Controls the subdivision in chunks
 
 k_nyq = np.pi/data.dx
@@ -183,7 +184,14 @@ for jj in range(0,nband_run):
                                         vt_e, vt_m, eps, lam=lam_dict[jj],
                                         func_jac=func_jac, gf_max=gf_max, nnn=1, 
                                         inc_data=inc_data[jj], inc_mod=inc_mod[jj],
-                                        niter=niter, verbose=3)
+                                        niter=niter, verbose=1)
+
+    # Rank and condition number
+    for iy in range(inver[jj].tiles['ny_chunk']):
+        for ix in range(inver[jj].tiles['nx_chunk']):
+            rel_rank = inver[jj].tiles['rel_rank'][iy,ix]
+            cond = inver[jj].tiles['cond'][iy,ix]
+            print(f'jj, rel_rank, cond = {jj}, {rel_rank}, {cond:.1f}')
 
 toc = time.perf_counter()
 time_inv = toc - tic
@@ -197,18 +205,7 @@ scl = 1e-3
 xtnt = scl*np.array([model.y[0], model.y[-1], model.x[0], model.x[-1]])
 
 # PLot inversion bands
-fig, axs = plt.subplots(2,nband_run, figsize=(5*nband_run,10))
-for kb in range(0, nband_run):
-    ax = axs.ravel()[kb+nband_run]
-    im = ax.imshow(inver[kb].magn.T, origin='lower', extent=xtnt)
-    cb = ax.figure.colorbar(im, ax=ax)
-    cb.set_label('Magnetization [A/m]')
-    ax.axis('scaled')
-    ax.set_title(f'Aeromag inversion band[{kb}]')
-    ax.scatter(scl*plants.loc[0,'x_isn'], scl*plants.loc[0, 'y_isn'], c='r', label='HH')
-    ax.scatter(scl*plants.loc[1,'x_isn'], scl*plants.loc[1, 'y_isn'], c='r', label='NV')
-    ax.set_xlabel('easting [km]')
-    ax.set_ylabel('northing [km]')
+fig, axs = plt.subplots(3,nband_run, figsize=(4*nband_run,12))
 
 for kb in range(0, nband_run):
     ax = axs.ravel()[kb]
@@ -221,6 +218,31 @@ for kb in range(0, nband_run):
     ax.scatter(scl*plants.loc[1,'x_isn'], scl*plants.loc[1, 'y_isn'], c='r', label='NV')
     ax.set_xlabel('easting [km]')
     ax.set_ylabel('northing [km]')
+    
+for kb in range(0, nband_run):
+    ax = axs.ravel()[kb+nband_run]
+    im = ax.imshow(inver[kb].magn.T, origin='lower', extent=xtnt)
+    cb = ax.figure.colorbar(im, ax=ax)
+    cb.set_label('Magnetization [A/m]')
+    ax.axis('scaled')
+    ax.set_title(f'Aeromag inversion band[{kb}]')
+    ax.scatter(scl*plants.loc[0,'x_isn'], scl*plants.loc[0, 'y_isn'], c='r', label='HH')
+    ax.scatter(scl*plants.loc[1,'x_isn'], scl*plants.loc[1, 'y_isn'], c='r', label='NV')
+    ax.set_xlabel('easting [km]')
+    ax.set_ylabel('northing [km]')
+    
+for kb in range(0, nband_run):
+    ax = axs.ravel()[kb+2*nband_run]
+    im = ax.imshow(synt[kb].tma.T, origin='lower', extent=xtnt)
+    cb = ax.figure.colorbar(im, ax=ax)
+    cb.set_label('TMA [nT]')
+    ax.axis('scaled')
+    ax.set_title(f'Aeromag synt band[{kb}]')
+    ax.scatter(scl*plants.loc[0,'x_isn'], scl*plants.loc[0, 'y_isn'], c='r', label='HH')
+    ax.scatter(scl*plants.loc[1,'x_isn'], scl*plants.loc[1, 'y_isn'], c='r', label='NV')
+    ax.set_xlabel('easting [km]')
+    ax.set_ylabel('northing [km]')
+    
 fig.tight_layout(pad=2.)
 fig.savefig(png + f'Aeromag_Data_and_Inversion_run{krun}.png')
 

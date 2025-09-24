@@ -37,9 +37,6 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
         !   |   |   |   |   |   |   |   |
         ---------------------------------
     
-    TODO: from_nT and to_nT must be replaced by a general datascaling
-          to deal with gravity and FTG data. PARTLY DONE 2/2-2021
-
     Note: The coordinate system is right-handed with positive z direction down.
           Hence, x=Northing, y=Easting. 
           Coordinates are Cartesian with dimension meters.
@@ -78,7 +75,8 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     inc_mod: int. Model resamlping
     verbose: int, print shit?
     resamp: bool. Resample inversion result to original grid, ref inc_mod (default is True)    
-    
+    snap: bool. Snap to grid? (default is snap=True)
+
     Programmed:
         Ketil Hokstad, 26. September 2018 (Matlab)
         Ketil Hokstad, 14. December 2020    
@@ -97,14 +95,15 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     inc_data = kwargs.get('inc_data', 1)
     inc_mod = kwargs.get('inc_mod', 1)
     resamp = kwargs.get('resamp', True)
+    snap = kwargs.get('snap', True)
     
     # Data scaling (to/from SI units)
     to_SI   = kwargs.get('to_SI', mag.to_SI)
     from_SI = kwargs.get('from_SI', 1.0/to_SI)    
     
     # Decimate data and model
-    data  = data_in.decimate(inc_data, do_all=True, verbose=verbose)
-    model = model_in.decimate(inc_mod, do_all=True, verbose=verbose)
+    data  = data_in.decimate(inc_data, do_all=True, verbose=0)
+    model = model_in.decimate(inc_mod, do_all=True, verbose=0)
     
     # Compute roll along supergrid: NB! nfl refers to the model grid
     rnum = data.dx*data.dy*gf_max
@@ -114,6 +113,12 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     # Chunks
     nx_chunk = int(np.ceil(model.nx/nfl))
     ny_chunk = int(np.ceil(model.ny/nfl))
+
+    # Snap to model grid?
+    if snap:
+        dx_snp = model.dx
+    else:
+        dx_snp = 1.0
 
     if verbose>0:
         print('Map inversion')
@@ -127,6 +132,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
         print(' o inc_data = {}'.format(inc_data))
         print(' o inc_mod  = {}'.format(inc_mod))
         print(' o resamp = {}'.format(resamp))
+        print(' o snap = {}'.format(snap))
         print(' o args:')
         for kk, arg in enumerate(args):
             print(f'   - kk, arg = {kk}, {arg}')
@@ -143,8 +149,20 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
 
     # Initialize synt data object
     synt = MapData(data.x, data.y, data.z)
-    synt.tma = nans_like(data.gx)
+    synt.tma = np.zeros_like(data.gx)
+    synt.rms_err = 0.0
     
+    # Dict storing the tiling pattern
+    tiles = {
+        'nnn':nnn, 'nfl': nfl, 
+        'inc_data': inc_data, 'inc_mod': inc_mod,
+        'nx_chunk': nx_chunk, 'ny_chunk': ny_chunk,
+        'rel_rank': np.empty((ny_chunk, nx_chunk), dtype=float),
+        'cond': np.empty((ny_chunk, nx_chunk), dtype=float),
+        'indxs': np.empty((ny_chunk, nx_chunk), dtype=dict)
+             }
+    keys_indxs = ['jx1', 'jx2', 'jy1', 'jy2', 'kx1', 'kx2', 'ky1', 'ky2']
+
     # loop over model chunks    
     if verbose >0: print('Roll-along inversion:')
     for iyc in range(ny_chunk):
@@ -154,12 +172,13 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             indxs = ra_indxs(ixc, iyc, model, data, nfl, nnn)
             jx1, jx2, jy1, jy2, kx1, kx2, ky1, ky2 = indxs
             my, mx = jy2-jy1+1, jx2-jx1+1
-            
+
+            # Store the tile indices
+            tiles['indxs'][iyc,ixc] = {key:idd for (key,idd) in zip(keys_indxs, list(indxs))}
             
             if verbose > 1: print(' o my, mx = {}, {}'.format(my, mx))
             if verbose > 2:
-                print(' o jy1, jy2, ky1, ky2, jx1, jx2, kx1, kx2 = {}, {}, {}, {}, {}, {}, {}, {}'.format(
-                          jy1, jy2, ky1, ky2, jx1, jx2, kx1, kx2))
+                print(f' o jy1, jy2, ky1, ky2, jx1, jx2, kx1, kx2 = {jy1}, {jy2}, {ky1}, {ky2}, {jx1}, {jx2}, {kx1}, {kx2}')
             
             # Filters to remove nan and inf
             jnd = np.isfinite(model.z[0][jy1:jy2+1, jx1:jx2+1])
@@ -179,7 +198,6 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             gy_flat = model.gy[jy1:jy2+1, jx1:jx2+1][jnd]
             gz_flat = model.z[0][jy1:jy2+1, jx1:jx2+1][jnd]
             vm_1 = np.vstack([gx_flat, gy_flat, gz_flat]).T
-            #vt_e, vt_m = model.vt, model.vt
             ds = model.dx*model.dy
     
             # Lists for gathering Gauss-Newton iterations
@@ -188,14 +206,18 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             synt_it = [None for ii in range(niter+1)]   # Synt data from current model
             rms_err = [None for ii in range(niter+1)]   # RMS error of current model
             rank_it = [None for ii in range(niter+1)]   # Rank of pseudo inverse
+            cond_it = [None for ii in range(niter+1)]   # COndition number of pseudo inverse
 
             # First iter is the linear inversion (initial value for M is zero)
             it = 0
             print('   - Iteration {}: Linear inversion'.format(it))
             base_it[it] = model.z[1][jy1:jy2+1, jx1:jx2+1][jnd].reshape(-1,1)
             vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
-            LL = ds*func_grn(vr, vm_1, vm_2, *args)
-            magn_it[it], rank_it[it] = marq_leven(LL, dd, lam)
+            LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=dx_snp)
+            magn_it[it], rank_it[it], cond_it[it] = marq_leven(LL, dd, lam)
+            tiles['rel_rank'][iyc, ixc] = rank_it[it]/LL.shape[1]
+            tiles['cond'][iyc, ixc] = cond_it[it]
+            print(f' * rank, nm, rank/ndim, cond = {rank_it[it]}, {LL.shape[1]}, {rank_it[it]/LL.shape[1]}, {cond_it[it]:.0f}')
             
             # Non-linear GN inversion: Joint mag and zbase update
             nh = magn_it[0].shape[0]
@@ -204,25 +226,25 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
                 print('   - Iteration {}: Non-linear inversion'.format(it+1))
                 # Compute data residual for current model:
                 vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
-                LL = ds*func_grn(vr, vm_1, vm_2, *args)
+                LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=dx_snp)
                 synt_it[it] = LL.dot(magn_it[it])
                 deld = dd - synt_it[it]
                 rms_err[it] = np.sqrt(np.sum(deld**2)/np.sum(dd**2))
                     
                 # Compute Jacobain matrix
                 smag = magn_it[it]                
-                KK = ds*func_jac(vr, smag, vm_2, *args)
+                KK = ds*func_jac(vr, smag, vm_2, *args, dx_snp=dx_snp)
                 JJ = np.hstack((LL, KK)) # The full Jacobian
                 
                 # Compute model update (mag and zb)
-                delm, rank_it[it+1] = marq_leven(JJ, deld, lam)
+                delm, rank_it[it+1], cond_it[it] = marq_leven(JJ, deld, lam)
                 magn_it[it+1] = magn_it[it] + delm[:nh]
                 base_it[it+1] = base_it[it] + delm[nh:] 
             
             # Synt data and error from last iteration:
             it = niter
             vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
-            LL = ds*func_grn(vr, vm_1, vm_2, *args)
+            LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=1.0)
             synt_it[it] = LL.dot(magn_it[it])
             deld = dd - synt_it[it]
             rms_err[it] = np.sqrt(np.sum(deld**2)/np.sum(dd**2))
@@ -233,16 +255,22 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             kh.zb0[jy1:jy2+1, jx1:jx2+1][jnd] = base_it[ 0].flatten()
             kh.zbn[jy1:jy2+1, jx1:jx2+1][jnd] = base_it[it].flatten()
             
-            synt.tma[ky1:ky2+1, kx1:kx2+1][knd] = from_SI*synt_it[it].flatten()
-            synt.rms_err = rms_err
+            # wold = synt.tma[ky1:ky2+1, kx1:kx2+1][knd]
+            # synt.tma[ky1:ky2+1, kx1:kx2+1][knd] = wold + from_SI*synt_it[it].flatten()
+            synt.tma[ky1:ky2+1, kx1:kx2+1][knd] += from_SI*synt_it[it].flatten()
+            synt.rms_err += rms_err[-1]
 
     # Resample the output to input grids:
+    synt.rms_err = synt.rms_err/(nx_chunk*ny_chunk)
     synt_ut = synt.resample(inc_data, do_all=True, verbose=verbose)
     if resamp:
         kh_ut = kh.resample(inc_mod, do_all=True, verbose=verbose)
     else:
         kh_ut = kh
     
+    kh_ut.tiles = tiles
+    synt_ut.tiles = tiles
+
     return kh_ut, synt_ut
 
 def nans_like(aa):
@@ -295,19 +323,22 @@ def marq_leven(AA, dd, lam):
     -------
     mm: float, vector, shape=(nm). Solution
     rank: float. Rank of the ATA matrix
+    cond: COndition number of matrix
     
     Programmed:
         Ketil Hokstad, 13. December 2017 (Matlab)
         Ketil Hokstad,  9. December 2020    
+        Ketil Hokstad,  9. September 2025    
     """
 
-    #print('Core Marquardt-Levenberg solution')
     dd_pc = AA.T.dot(dd)
     ATA = AA.T.dot(AA)
     JJ = np.diag(ATA.diagonal())
     mm, res, rank, s = np.linalg.lstsq(ATA+lam*JJ, dd_pc, rcond=None)
+    cond = np.max(s)/np.min(s)
+    # print(f'marq_leven: condition number = {cond}')
     
-    return mm, rank
+    return mm, rank, cond
 
 #-------------------------------------------------------
 # Image stack

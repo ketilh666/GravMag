@@ -107,6 +107,9 @@ class MapData:
         Returns
         -------
         data: self filtered
+
+        Returns a new data object, e.g.
+            data2 = data.bandpass(0, 0.5*k_nyq, ntap=10)
         
         Programmed:
             Ketil Hokstad, 24. January 2020 (Matlab)
@@ -564,6 +567,7 @@ def _decim_fld(att, x, y, inc_x, inc_y, *args):
     if len(args)>1: verbose = args[1]
 
     # Copy scalar data:
+    # TODO: flip the order of the tests
     if isinstance(att, (int, float, bool, complex, str, NoneType)):
         if verbose>0: print('  - copy: {}'.format(fld))
         att2 = att
@@ -580,6 +584,10 @@ def _decim_fld(att, x, y, inc_x, inc_y, *args):
         elif att.ndim == 1:
             if verbose>0: print('  - copy: {}'.format(fld))
             att2 = att
+        
+    # Last resort
+    else:
+        att2 = att
 
     return att2
 
