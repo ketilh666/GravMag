@@ -184,6 +184,114 @@ def green_rtp(vr, vm_1, vm_2, eps, **kwargs):
     
     return grn_rtp
 
+def green_1d(vr, vm_1, vm_2, eps, **kwargs):
+    """ Compute the magnetic Green's function for RTP data in the 1D case. 
+
+    *RTP = Reduction to pole (the magnetic background filed is normal incidence)
+    
+    This function utilize horizontal invariance and look-up tables. 
+     
+    Parameters
+    ----------
+    vr: float, array of 3C vectors, shape=(nr,3)
+        Co-ordinates of the observation points
+    vm_1 float, array of 3C vector, shape=(nm,3)
+        Horizontal coordinates and top of anomaly points
+    vm_2: float, array of 3C vector, shape=(nm,3)
+        Horizontal coordinates and base of anomaly points
+    eps: float, stabilization (avoid division by zero)
+    
+    Returns
+    -------
+    grn_1d: float
+        Aray of the magnetic Green's function matrix
+
+    kwargs:
+    dx_snp: float. Grid spacing of magnetization model grid
+    dy_snp: float. Grid spacing of magnetization model model
+
+    Programmed: 
+        Ketil Hokstad, 13. December 2017 (Matlab)
+        Ketil Hokstad,  9. December 2020  
+        Ketil Hokstad, 13. January  2021  
+        Ketil Hokstad, 17. September 2025 (RTP)  
+        Ketil Hokstad, 30. September 2024 (snap to grid)
+   """
+            
+    dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
+    
+    # Snap to grid
+    vr_snp = np.ones_like(vr)
+    vr_snp[:,0] = dx_snp*np.round(vr[:,0]/dx_snp)
+    vr_snp[:,1] = dy_snp*np.round(vr[:,1]/dy_snp)
+    vr_snp[:,2] = vr[:,2]
+
+    # Grid for look-up table
+    dx = np.min(np.abs(np.diff(vr_snp[:,0])))
+    dy = np.max(np.abs(np.diff(vr_snp[:,1])))
+    x1, x2 = np.min(vr_snp[:,0]), np.max(vr_snp[:,0]) 
+    y1, y2 = np.min(vr_snp[:,1]), np.max(vr_snp[:,1]) 
+    nxarr = int(np.ceil((x2-x1)/dx)) + 1
+    nyarr = int(np.ceil((y2-y1)/dy)) + 1
+    
+    z1 = np.nanmean(vm_1[:,2]) - np.nanmean(vr[:,2])
+    z2 = np.nanmean(vm_2[:,2]) - np.nanmean(vr[:,2])
+
+    # Compute look-up table
+    xarr = np.linspace(0, x2-x1, nxarr)
+    yarr = np.linspace(0, y2-y1, nyarr)
+    
+    grn_tab = np.zeros((nyarr, nxarr), dtype=float)
+    for iy in range(nyarr):
+        for ix in range(nxarr):
+            
+            vp = [xarr[ix], yarr[iy], z1]
+            vq = [xarr[ix], yarr[iy], z2]
+    
+            p2 = vp[0]*vp[0] + vp[1]*vp[1] + vp[2]*vp[2] + eps
+            p1 = np.sqrt(p2)               # r (distance from receivers to top horizon)
+            p3 = p1*p2                     # r**3
+            
+            q2 = vq[0]*vq[0] + vq[1]*vq[1] + vq[2]*vq[2] + eps
+            q1 = np.sqrt(q2)               # q (distance from receivers to base horizon)
+            q3 = q1*q2                     # q**3
+        
+            pw1 = -(1 + vp[2]/p1)*(1 + vp[2]/p1)/((vp[2]+p1)**2) 
+            pw2 =  (1/p1 - vp[2]*vp[2]/p3)/(vp[2]+p1)
+            
+            qw1 = -(1 + vq[2]/q1)*(1 + vq[2]/q1)/((vq[2]+q1)**2) 
+            qw2 =  (1/q1 - vq[2]*vq[2]/q3)/(vq[2]+q1)
+
+            rf  = mu0/(4*np.pi)
+            grn_tab[iy, ix] = rf*(qw1 + qw2 - pw1 - pw2)
+    
+    # QC plot GF table
+    fig = plt.figure()
+    xtnt = np.array([xarr[0], xarr[1], yarr[0], yarr[1]])
+    plt.imshow(grn_tab, origin='lower', extent=xtnt)
+    plt.xlabel('x [m]')
+    plt.ylabel('y [m]')
+    plt.title('G(xr,xm)')
+    fig.savefig('Greens_Function_Table.png')
+    
+    # Compute greens function using look-up table
+    nr = vr.shape[0]
+    nm = vm_2.shape[0]
+    
+    print(f'mag.green_1d: dx_snp, eps = {dx_snp}, {eps}')
+
+    # Compute Green's function array
+    grn_1d = np.zeros([nr,nm], dtype=float)
+    for jj in range(nr):       # Data space
+    
+        x = vm_1[:,0] - vr_snp[jj,0]
+        y = vm_1[:,1] - vr_snp[jj,1]
+        ix = np.rint(np.abs(x/dx)).astype(int)
+        iy = np.rint(np.abs(y/dy)).astype(int)
+        grn_1d[jj,:] = grn_tab[iy, ix]            
+            
+    return grn_1d
+
 #--------------------------------------------------
 #   Compute Jacobian matrix wrt z2
 #--------------------------------------------------

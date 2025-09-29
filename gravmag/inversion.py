@@ -213,10 +213,10 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             print('   - Iteration {}: Linear inversion'.format(it))
             base_it[it] = model.z[1][jy1:jy2+1, jx1:jx2+1][jnd].reshape(-1,1)
             vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
-            LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=dx_snp)
+            LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=1.0)
             magn_it[it], rank_it[it], cond_it[it] = marq_leven(LL, dd, lam)
-            tiles['rel_rank'][iyc, ixc] = rank_it[it]/LL.shape[1]
-            tiles['cond'][iyc, ixc] = cond_it[it]
+            tiles['rel_rank'][iyc, ixc] = rank_it[it]/LL.shape[1] 
+            tiles['cond'][iyc, ixc] = cond_it[it] # Condition number of the matrix
             print(f' * rank, nm, rank/nm, cond = {rank_it[it]}, {LL.shape[1]}, {rank_it[it]/LL.shape[1]}, {cond_it[it]:.0f}')
             
             # Non-linear GN inversion: Joint mag and zbase update
@@ -241,10 +241,12 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
                 magn_it[it+1] = magn_it[it] + delm[:nh]
                 base_it[it+1] = base_it[it] + delm[nh:] 
             
-            # Synt data and error from last iteration:
+            # Synt data and error from last iteration. Recompute LL if base has moved
             it = niter
-            vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
-            LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=1.0)
+            if niter<0:
+                vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
+                LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=1.0)
+            
             synt_it[it] = LL.dot(magn_it[it])
             deld = dd - synt_it[it]
             rms_err[it] = np.sqrt(np.sum(deld**2)/np.sum(dd**2))
@@ -266,6 +268,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     else:
         kh_ut = kh
     
+    # Store the tiles for later
     kh_ut.tiles = tiles
     synt_ut.tiles = tiles
 
