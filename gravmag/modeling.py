@@ -104,7 +104,7 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         print(' o args:')
         for kk, arg in enumerate(args):
             print('   - kk, arg = {}, {}'.format(kk, arg))
-        print(f' ø nx, dx = {geom.nx}, {geom.dx}')
+        # print(f' o nx, dx = {geom.nx}, {geom.dx}')
 
     # Filters to remove nan and inf
     jnd = np.isfinite(model.magn)
@@ -128,11 +128,11 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
             rat = (np.max(model.z[0])-z)/(model.dx)
             if   rat >= 0.75: dx_snp = geom.dx
             elif rat >= 0.50: dx_snp = model.dx/2
-            else:            dx_snp = model.dx
+            else:             dx_snp = model.dx
         else:
             dx_snp = 1.0
             
-        print(f'rat = {rat}, dx_snp={dx_snp}')
+        # print(f'rat = {rat}, dx_snp={dx_snp}')
 
         # Data space:
         synt = MapData(geom.x, geom.y, z)
