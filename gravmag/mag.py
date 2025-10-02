@@ -48,7 +48,10 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps, **kwargs):
         Direction of magnetization, currently va=vt
     eps: float, stabilization
     
-    kwargs:
+    kwargs
+    ------
+    dx: float. Grid spacing of data grid
+    dy: float. Grid spacing of data grid
     dx_snp: float. Grid spacing of magnetization model grid
     dy_snp: float. Grid spacing of magnetization model model
 
@@ -64,6 +67,7 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps, **kwargs):
         Ketil Hokstad, 24. September 2024 (snap to grid)
     """
             
+    dy = dx = kwargs.get('dx', 1000.0)
     dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
 
     vr_snp = np.ones_like(vr)
@@ -133,7 +137,10 @@ def green_rtp(vr, vm_1, vm_2, eps, **kwargs):
     grn_rtp: float
         Aray of the magnetic Green's function matrix
 
-    kwargs:
+    kwargs
+    ------
+    dx: float. Grid spacing of data grid
+    dy: float. Grid spacing of data grid
     dx_snp: float. Grid spacing of magnetization model grid
     dy_snp: float. Grid spacing of magnetization model model
 
@@ -145,6 +152,7 @@ def green_rtp(vr, vm_1, vm_2, eps, **kwargs):
         Ketil Hokstad, 24. September 2024 (snap to grid)
     """
             
+    dy = dx = kwargs.get('dx', 1000.0)
     dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
 
     vr_snp = np.ones_like(vr)
@@ -206,7 +214,10 @@ def green_1d(vr, vm_1, vm_2, eps, **kwargs):
     grn_1d: float
         Aray of the magnetic Green's function matrix
 
-    kwargs:
+    kwargs
+    ------
+    dx: float. Grid spacing of data grid
+    dy: float. Grid spacing of data grid
     dx_snp: float. Grid spacing of magnetization model grid
     dy_snp: float. Grid spacing of magnetization model model
 
@@ -218,6 +229,7 @@ def green_1d(vr, vm_1, vm_2, eps, **kwargs):
         Ketil Hokstad, 30. September 2024 (snap to grid)
    """
             
+    dy = dx = kwargs.get('dx', 1000.0)
     dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
     
     # Snap to grid
@@ -227,8 +239,8 @@ def green_1d(vr, vm_1, vm_2, eps, **kwargs):
     vr_snp[:,2] = vr[:,2]
 
     # Grid for look-up table
-    dx = np.min(np.abs(np.diff(vr_snp[:,0])))
-    dy = np.max(np.abs(np.diff(vr_snp[:,1])))
+    # dy = dx = np.min(np.abs(np.diff(vr_snp[:,0])))
+    # dy = np.max(np.abs(np.diff(vr_snp[:,1])))
     x1, x2 = np.min(vr_snp[:,0]), np.max(vr_snp[:,0]) 
     y1, y2 = np.min(vr_snp[:,1]), np.max(vr_snp[:,1]) 
     nxarr = int(np.ceil((x2-x1)/dx)) + 1
@@ -266,19 +278,19 @@ def green_1d(vr, vm_1, vm_2, eps, **kwargs):
             grn_tab[iy, ix] = rf*(qw1 + qw2 - pw1 - pw2)
     
     # QC plot GF table
-    fig = plt.figure()
-    xtnt = np.array([xarr[0], xarr[1], yarr[0], yarr[1]])
-    plt.imshow(grn_tab, origin='lower', extent=xtnt)
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.title('G(xr,xm)')
-    fig.savefig('Greens_Function_Table.png')
+    # fig = plt.figure()
+    # xtnt = np.array([xarr[0], xarr[1], yarr[0], yarr[1]])
+    # plt.imshow(grn_tab, origin='lower', extent=xtnt)
+    # plt.xlabel('x [m]')
+    # plt.ylabel('y [m]')
+    # plt.title('G(xr,xm)')
+    # fig.savefig('Greens_Function_Table.png')
     
     # Compute greens function using look-up table
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     
-    print(f'mag.green_1d: dx_snp, eps = {dx_snp}, {eps}')
+    print(f'mag.green_1d: dx, dx_snp, eps = {dx}, {dx_snp}, {eps}')
 
     # Compute Green's function array
     grn_1d = np.zeros([nr,nm], dtype=float)
@@ -316,6 +328,13 @@ def jacobi(vr, smag, vm, vt_e, vt_m, eps, **kwargs):
         Direction of magnetization, currently va=vt
     eps: float, stabilization
     
+    kwargs
+    ------
+    dx: float. Grid spacing of data grid
+    dy: float. Grid spacing of data grid
+    dx_snp: float. Grid spacing of magnetization model grid
+    dy_snp: float. Grid spacing of magnetization model model
+
     Returns
     -------
     jac_ij: float
@@ -326,6 +345,7 @@ def jacobi(vr, smag, vm, vt_e, vt_m, eps, **kwargs):
         Ketil Hokstad, 24. September 2024 (snap to grid)
     """    
     
+    dy = dx = kwargs.get('dx', 1000.0)
     dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
 
     vr_snp = np.ones_like(vr)
@@ -334,7 +354,7 @@ def jacobi(vr, smag, vm, vt_e, vt_m, eps, **kwargs):
     vr_snp[:,2] = vr[:,2]
 
     nr = vr.shape[0]
-    nm = vm_2.shape[0]
+    nm = vm.shape[0]
     
     print(f'mag.jacobi: dx_snp, vt_e, eps = {dx_snp}, {vt_e}, {eps}')
 
@@ -354,8 +374,6 @@ def jacobi(vr, smag, vm, vt_e, vt_m, eps, **kwargs):
             w2 = 3*(dot(vt_m,vq))*(dot(vt_e,vq))/q5
         
             rf  = mu0/(4*np.pi)
-#            print(jj, ii, smag[ii].shape)
-#            print('w1, w2, smag[ii]={}, {}, {}'.format(w1, w2, smag[ii]))
             jac[jj,ii] = rf*(w1 + w2)*smag[ii]
     
     return jac

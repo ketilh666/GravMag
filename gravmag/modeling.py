@@ -142,15 +142,15 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
                         synt.gy[knd], 
                         synt.z[0][knd]]).T
         
-        LL = ds*func_grn(vr, vm_1, vm_2, *args, dx_snp=dx_snp)
+        LL = ds*func_grn(vr, vm_1, vm_2, *args, dx=synt.dx, dx_snp=dx_snp)
         tma = LL.dot(model.magn[jnd])
         synt.tma[knd] = from_SI*tma.flatten()
 
-        fig = plt.figure()
-        plt.imshow(LL)
-        plt.axis('auto')
-        plt.title(f'synt LL: z={z}')
-        fig.savefig(f'Greens_Matrix_z_{z:.0f}_inc_mod_{inc_mod}_inc_data_{inc_data}.png')
+        # fig = plt.figure()
+        # plt.imshow(LL)
+        # plt.axis('auto')
+        # plt.title(f'synt LL: z={z}')
+        # fig.savefig(f'Greens_Matrix_z_{z:.0f}_inc_mod_{inc_mod}_inc_data_{inc_data}.png')
         
         if resamp:
             synt_ut[jj] = synt.resample(inc_data, do_all=True, verbose=0)
