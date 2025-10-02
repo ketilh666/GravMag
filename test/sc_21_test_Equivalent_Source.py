@@ -32,7 +32,7 @@ if not os.path.isdir(png): os.mkdir(png)
 if not os.path.isdir(pkl): os.mkdir(pkl)
 
 write_grid = False
-write_pkl  = True
+write_pkl  = False
 
 block = False
 
