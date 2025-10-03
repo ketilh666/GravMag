@@ -21,8 +21,8 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     by the equivalent source method. Typical workflow:
         
         1. Map inversion of magnetic data recorded at datum z=zr.
-        2. Forward modeling with model from map inversion with
-           at datums z=[z0, z1, z2, ..., zn]
+        2. Forward modeling with model from map inversion at new
+           datums z=[z0, z1, z2, ..., zn]
     
     Note: The coordinate system is right-handed with positive z direction down.
           Hence, x=Northing, y=Easting. 
@@ -86,12 +86,12 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     # rden = model.dx*model.dy*(2*nnn+1)**2
     # nfl = int(np.floor(np.sqrt(np.sqrt(rnum/rden))))
 
-    # Chunks
+    # Chunks: NOT YET IMPLEMENTED FOR MODELIG
     # nx_chunk = int(np.ceil(model.nx/nfl))
     # ny_chunk = int(np.ceil(model.ny/nfl))
 
     if verbose>0:
-        print('Map modeling')
+        print('### modeling.map_modeling:')
         # print(' o gf_max = {:d}'.format(int(gf_max)))
         # print(' o nnn = {}'.format(nnn))
         # print(' o nfl = {:d}'.format(nfl))

@@ -1,12 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+# import matplotlib.pyplot as plt
+# import matplotlib.cm as cm
 
 #-----------------------
 # Some constants
 #-----------------------
 
-gamma = 6.67430e-11 # gravity constant [m**3/(kg s**2)]
+gamma = 6.67430e-11 # Newtons gravity constant [m**3/(kg s**2)]
 to_Eo, from_Eo = 1.0e9, 1.0e-9 # from SI to Eotvos
 from_SI, to_SI = 1.0e9, 1.0e-9 # from Eotvos to SI
 d2r, r2d = np.pi/180, 180/np.pi
@@ -34,7 +34,7 @@ def green(vr, vm_1, vm_2, eps):
     Returns
     -------
     grn: float
-        Aray of the magnetic Green's function matrix
+        Array of the FTG Green's function
 
     Programmed: 
         Ketil Hokstad, 13. December 2017 (Matlab)

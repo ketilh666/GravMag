@@ -121,7 +121,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
         dx_snp = 1.0
 
     if verbose>0:
-        print('Map inversion')
+        print('### inversion.map_inversion:')
         print(' o gf_max = {:d}'.format(int(gf_max)))
         print(' o nnn = {}'.format(nnn))
         print(' o nfl = {:d}'.format(nfl))

@@ -249,10 +249,9 @@ def green_1d(vr, vm_1, vm_2, eps, **kwargs):
     z1 = np.nanmean(vm_1[:,2]) - np.nanmean(vr[:,2])
     z2 = np.nanmean(vm_2[:,2]) - np.nanmean(vr[:,2])
 
-    # Compute look-up table
+    # Compute look-up table for Greens function
     xarr = np.linspace(0, x2-x1, nxarr)
     yarr = np.linspace(0, y2-y1, nyarr)
-    
     grn_tab = np.zeros((nyarr, nxarr), dtype=float)
     for iy in range(nyarr):
         for ix in range(nxarr):
@@ -290,7 +289,7 @@ def green_1d(vr, vm_1, vm_2, eps, **kwargs):
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     
-    print(f'mag.green_1d: dx, dx_snp, eps = {dx}, {dx_snp}, {eps}')
+    print(f'mag.green_1d: dx, dx_snp, z1, z2, eps = {dx}, {dx_snp}, {z1:.1f}, {z2:.1f}, {eps}')
 
     # Compute Green's function array
     grn_1d = np.zeros([nr,nm], dtype=float)
