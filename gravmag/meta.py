@@ -487,6 +487,8 @@ class MapData:
         inc: int, optional (defualt is 1)
         inc_x: int, optional (default is inc) decimation increment in x
         inc_y: int: optional (default is inc) decimation increment in y
+        x, y: array of float. Give x,y as input if mx, my is not a multiple of inc.
+            Default is x=np.linspace(self.x[0], self.x[-1], inc_x*(nx-1)+1)
         do_all: bool, optional (default=False)
             Decimate also the fields not created by __init__
         
@@ -512,14 +514,17 @@ class MapData:
         # Decimate all the fields created by __init__
         nz = len(self.z) # List
         nx, ny = self.nx, self.ny # nx, ny of the input
-        x = np.linspace(self.x[0], self.x[-1], inc_x*(nx-1)+1)
-        y = np.linspace(self.y[0], self.y[-1], inc_y*(ny-1)+1)
+        
+        # Give x, y as input if mx, my is not a multiple of inc
+        x = kwargs.get('x', np.linspace(self.x[0], self.x[-1], inc_x*(nx-1)+1))
+        y = kwargs.get('y', np.linspace(self.y[0], self.y[-1], inc_y*(ny-1)+1))               
         gx, gy = np.meshgrid(x, y)
         mx, my = x.shape[0], y.shape[0]
         
         z = []
         for jj, zi in enumerate(self.z):
-            rgi = RegularGridInterpolator((self.x, self.y), zi.T)
+            rgi = RegularGridInterpolator((self.x, self.y), zi.T,
+                                          bounds_error=False, fill_value=0.0)
             xy_par = list(zip(gx.ravel(),gy.ravel()))
             z.append(rgi(xy_par).reshape(my, mx))
         
@@ -552,6 +557,229 @@ class MapData:
                 setattr(data, fld, att2)
                 
         # Output
+        return data
+
+#-----------------------------------------------------
+# Class method: mirror_edges
+#-----------------------------------------------------
+
+    def mirror_edges(self, *args, **kwargs):
+        """Mirror the edges of the data to reduce inversion artifacts.
+        
+        Parameters
+        ----------
+        
+        args
+        ----
+        led: int. Length of edge to mirror in number of grid points (default is 20) 
+                
+        kwargs
+        ------
+        led: int. Length of edge to mirror in number of grid points (default is 20) 
+        verbose: int. Print shit?
+        kplot: bool. QC plotting?
+        
+        Returns
+        -------
+        data_ext: self with mirrored edges
+        
+        Programmed:
+            KetilH, 23. October 2025
+        """
+        
+        # Get args:
+        if len(args) == 0: led = 0
+        else: led = args[0]
+        
+        # Get the kwargs
+        led = kwargs.get('led', led)
+        verbose = kwargs.get('verbose', 0)
+        kplot = kwargs.get('kplot', False)
+        
+        # Create a new object with expanded edges
+        x1 = self.x[ 0] - led*self.dx
+        x2 = self.x[-1] + led*self.dx
+        y1 = self.y[ 0] - led*self.dy
+        y2 = self.y[-1] + led*self.dy
+        
+        # Expanded data object
+        x = np.linspace(x1, x2, self.nx+2*led)
+        y = np.linspace(y1, y2, self.ny+2*led)
+        data_ext = MapData(x, y, [zj[0,0] for zj in self.z])
+        data_ext.led = led
+        
+        if verbose>0:
+            print('meta.mirror_edges:')
+            print(f' o led = {led}')
+            print(f' o Before: nx, ny = {self.nx}, {self.ny}')
+            print(f' o After : nx, ny = {data_ext.nx}, {data_ext.ny}')
+
+        # Attributes to expand and to copy
+        attr_exp = ['tma', 'mag0', 'magn']
+        attr_copy = ['rms_err', 'B0', 'inc', 'dec']
+        
+        # Copy attributes in attr_copy
+        for attr in attr_copy:
+            if hasattr(self, attr):
+                if verbose >1: print(f'Copy: attr={attr}')
+                setattr(data_ext, attr, getattr(self, attr))
+
+        # Indices in expanded grid
+        jx1, jx2 = led, self.nx+led
+        jy1, jy2 = led, self.ny+led
+        ny, nx = data_ext.ny, data_ext.nx
+        
+        # Mirror edges of self.z
+        for jj, zj in enumerate(data_ext.z):
+            
+            zj[jy1:jy2, jx1:jx2] = self.z[jj].copy()
+            
+            # Mirroring
+            if verbose >1: print(f'Mirror: jj={jj}')
+            for kk in range(led):   
+                if verbose>1: print(kk, led-kk-1, led+kk+1)
+                    
+                for jy in range(data_ext.ny):
+                    zj[jy, led-kk-1]  = zj[jy, led+kk+1]
+                    zj[jy, nx-led+kk] = zj[jy, nx-led-kk-2]
+                
+                for jx in range(data_ext.nx):
+                    zj[led-kk-1, jx]  = zj[led+kk+1, jx]
+                    zj[ny-led+kk, jx] = zj[ny-led-kk-2, jx]
+
+            # zj is just a local copy
+            data_ext.z[jj] = zj.copy()
+
+        # Mirror attributes in attr_ext
+        for attr in attr_exp:
+            if hasattr(self, attr):
+                
+                wrk = getattr(self, attr)
+                wrk_ext = np.zeros((ny, nx), dtype=float)
+                wrk_ext[jy1:jy2, jx1:jx2] = wrk.copy()
+                
+                # Just for QC plot
+                wrk_bef = wrk_ext.copy()
+                lab = attr
+       
+                # Mirroring
+                if verbose >1: print(f'Mirror: attr={attr}')
+                for kk in range(led):   
+                    if verbose>1: print(kk, nx-led+kk, nx-led-kk-2)
+                        
+                    for jy in range(data_ext.ny):
+                        wrk_ext[jy, led-kk-1]  = wrk_ext[jy, led+kk+1]
+                        wrk_ext[jy, nx-led+kk] = wrk_ext[jy, nx-led-kk-2]
+                    
+                    for jx in range(data_ext.nx):
+                        wrk_ext[led-kk-1, jx]  = wrk_ext[led+kk+1, jx]
+                        wrk_ext[ny-led+kk, jx] = wrk_ext[ny-led-kk-2, jx]
+        
+                # Set new object attribute
+                setattr(data_ext, attr, wrk_ext)
+
+        # QC plot
+        if kplot:
+                        
+            scl = 1e-3
+            xtnt_ext = scl*np.array([data_ext.y[0], data_ext.y[-1], 
+                                     data_ext.x[0], data_ext.x[-1]])
+            fig, axs = plt.subplots(2,1, figsize=(6, 10))
+            
+            ax = axs.ravel()[0]
+            im = ax.imshow(wrk_bef.T, origin='lower', cmap='jet')
+            cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            ax.set_title(f'Mirror edges {lab} (before)')
+            
+            ax = axs.ravel()[1]
+            im = ax.imshow(wrk_ext.T, origin='lower', cmap='jet')
+            cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            ax.set_title(f'Mirror edges {lab} (after)')
+            
+            for ax in axs.ravel():
+                ax.axis('scaled')
+                ax.set_xlabel('y (Easting) [km]')
+                ax.set_ylabel('x (Northing) [km]')
+            
+            fig.tight_layout(pad=1.0)
+            fig.savefig(f'Mirror_{lab}_QC_let_{led}.png')
+
+        return data_ext
+
+#-----------------------------------------------------
+# Class method: remove_edges
+#-----------------------------------------------------
+
+    def remove_edges(self, *args, **kwargs):
+        """Remove padded edges.
+       
+        Parameters
+        ----------
+       
+        args
+        ----
+        led: int. Length of edge to mirror in number of grid points (default is 20) 
+                
+        kwargs
+        ------
+        led: int. Length of edge to mirror in number of grid points (default is 20) 
+        verbose: int. Print shit?
+        kplot: bool. QC plotting?
+       
+        Returns
+        -------
+        data: self with padded edges reoved
+       
+        Programmed:
+           KetilH, 23. October 2025
+        """
+        
+        # Get args:
+        if len(args) == 0: led = self.led
+        else: led = args[0]
+        
+        # Get the kwargs
+        led = kwargs.get('led', led)
+        verbose = kwargs.get('verbose', 0)
+        kplot = kwargs.get('kplot', False)
+        
+        jx1, jx2 = led, self.nx-led
+        jy1, jy2 = led, self.ny-led
+        x = self.x[jx1:jx2]
+        y = self.y[jy1:jy2]
+        data = MapData(x, y, [zi[0,0] for zi in self.z])
+        ny, nx = data.ny, data.nx
+
+        if verbose>0:
+            print('meta.remove_edges:')
+            print(f' o led = {led}')
+            print(f' o Before: nx, ny = {self.nx}, {self.ny}')
+            print(f' o After : nx, ny = {data.nx}, {data.ny}')
+
+        # Attributes to expand and to copy
+        attr_exp = ['tma', 'mag0', 'magn']
+        attr_copy = ['rms_err', 'B0', 'inc', 'dec']
+
+        # Copy attributes in attr_copy
+        for attr in attr_copy:
+            if hasattr(self, attr):
+                if verbose >1: print(f'Copy: attr={attr}')
+                setattr(data, attr, getattr(self, attr))
+
+        # Remove edges of self.z
+        for jj, zj in enumerate(data.z):
+            data.z[jj] = self.z[jj][jy1:jy2, jx1:jx2].copy()
+            
+        # Mirror attributes in attr_ext
+        for attr in attr_exp:
+            if hasattr(self, attr):
+                
+                wrk_exp = getattr(self, attr)
+                wrk = wrk_exp[jy1:jy2, jx1:jx2]
+                               
+                # Set new object attribute
+                setattr(data, attr, wrk)
+
         return data
 
 #------------------------------------------------------
@@ -615,7 +843,8 @@ def _resamp_fld(att, x, y, x2, y2, *args):
         if   att.ndim == 2:
             
             if verbose>0: print('  - resample: {}'.format(fld))
-            rgi = RegularGridInterpolator((x, y), att.T)
+            rgi = RegularGridInterpolator((x, y), att.T,
+                                          bounds_error=False, fill_value=0.0)
             qx, qy = np.meshgrid(x2, y2)
             xy_par = list(zip(qx.ravel(), qy.ravel()))
             att2 = rgi(xy_par).reshape(y2.shape[0], x2.shape[0])

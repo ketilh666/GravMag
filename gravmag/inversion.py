@@ -262,9 +262,12 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
 
     # Resample the output to input grids:
     synt.rms_err = synt.rms_err/(nx_chunk*ny_chunk)
-    synt_ut = synt.resample(inc_data, do_all=True, verbose=verbose)
+    synt_ut = synt.resample(inc_data, x=data_in.x, y=data_in.y,
+                            do_all=True, verbose=verbose)
+    
     if resamp:
-        kh_ut = kh.resample(inc_mod, do_all=True, verbose=verbose)
+        kh_ut = kh.resample(inc_mod, qx=model_in.x, y=model_in.y,
+                            do_all=True, verbose=verbose)
     else:
         kh_ut = kh
     

@@ -51,7 +51,6 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         Number of nearest neighbor chunks in roll along buffer
     gf_max: int, optional (default is 1e6) NOT USED
         Max numer of Green's function elements per chunk in roll-along inversion
-    ltap: int. Taper length
     inc_data: int. Data resampling 
     inc_mod: int. Model resamlping
     verbose: int, print shit?
@@ -66,7 +65,6 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     nnn = kwargs.get('nnn', 1) # NOT USED
     gf_max = kwargs.get('gf_max', 1e6)  # NOT USED    
     verbose = kwargs.get('verbose', 0)
-    ltap = kwargs.get('ltap', 0)
     inc_data = kwargs.get('inc_data', 1)
     inc_mod = kwargs.get('inc_mod', 1)
     resamp = kwargs.get('resamp', True)
@@ -95,7 +93,6 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         # print(' o gf_max = {:d}'.format(int(gf_max)))
         # print(' o nnn = {}'.format(nnn))
         # print(' o nfl = {:d}'.format(nfl))
-        print(' o ltap = {:d}'.format(ltap))
         # print(' o nx_chunk  = {:d}'.format(nx_chunk))
         # print(' o ny_chunk  = {:d}'.format(ny_chunk))
         print(' o inc_data = {}'.format(inc_data))
@@ -153,7 +150,8 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         # fig.savefig(f'Greens_Matrix_z_{z:.0f}_inc_mod_{inc_mod}_inc_data_{inc_data}.png')
         
         if resamp:
-            synt_ut[jj] = synt.resample(inc_data, do_all=True, verbose=0)
+            synt_ut[jj] = synt.resample(inc_data, x=geom_in.x, y=geom_in.y,
+                                        do_all=True, verbose=0)
         else: 
             synt_ut[jj] = synt
 
