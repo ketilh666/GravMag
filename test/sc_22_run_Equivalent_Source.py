@@ -11,9 +11,6 @@ import time
 import pickle
 import os
 
-# import khio.grid as grid
-# import khio.xyz as xyz
-
 # Mag inversion stuff
 from gravmag import mag
 from gravmag.inversion import map_inversion
@@ -26,12 +23,14 @@ from gravmag.common import gridder
 # Folders
 #--------------------------
 
+block = False
+
 pkl = '../data/eq_source/pkl/'
 png = 'png_eq_source/'
 if not os.path.isdir(png): os.mkdir(png)
 if not os.path.isdir(pkl): os.mkdir(pkl)
 
-write_grid = False
+write_grid = True
 write_pkl  = True
 
 #-----------------------------------------------------
@@ -67,7 +66,7 @@ lam = 1e-3
 inc_data = 2
 inc_mod  = 2*inc_data
 
-# Assumt RTP
+# Assume RTP
 # green = mag.green_rtp  # Slow 3D function
 green = mag.green_1d    # Fast 1D function
 args = [eps]
@@ -225,4 +224,4 @@ if write_grid:
                              st.y, st.x, st.tma.T, verbose=1)
         print(st.z[0][0,0], ierr)
 
-plt.show(block=False)
+plt.show(block=block)

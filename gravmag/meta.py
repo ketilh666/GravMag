@@ -608,11 +608,6 @@ class MapData:
         data_ext = MapData(x, y, [zj[0,0] for zj in self.z])
         data_ext.led = led
         
-        if verbose>0:
-            print('meta.mirror_edges:')
-            print(f' o led = {led}')
-            print(f' o Before: nx, ny = {self.nx}, {self.ny}')
-            print(f' o After : nx, ny = {data_ext.nx}, {data_ext.ny}')
 
         # Attributes to expand and to copy
         attr_exp = ['tma', 'mag0', 'magn']
@@ -629,13 +624,21 @@ class MapData:
         jy1, jy2 = led, self.ny+led
         ny, nx = data_ext.ny, data_ext.nx
         
+        if verbose>0:
+            print('meta.mirror_edges:')
+            print(f' o led = {led}')
+            print(f' o Before: nx, ny = {self.nx}, {self.ny}')
+            print(f' o After : nx, ny = {data_ext.nx}, {data_ext.ny}')
+            print(f' o jx1, jx2 = {jx1}, {jx2}')
+            print(f' o jy1, jy2 = {jy1}, {jy2}')
+
         # Mirror edges of self.z
         for jj, zj in enumerate(data_ext.z):
             
             zj[jy1:jy2, jx1:jx2] = self.z[jj].copy()
             
             # Mirroring
-            if verbose >1: print(f'Mirror: jj={jj}')
+            if verbose >1: print(f'Mirror: z[jj]=z[{jj}]')
             for kk in range(led):   
                 if verbose>1: print(kk, led-kk-1, led+kk+1)
                     
@@ -681,28 +684,33 @@ class MapData:
         # QC plot
         if kplot:
                         
-            scl = 1e-3
-            xtnt_ext = scl*np.array([data_ext.y[0], data_ext.y[-1], 
-                                     data_ext.x[0], data_ext.x[-1]])
-            fig, axs = plt.subplots(2,1, figsize=(6, 10))
+            try:
             
-            ax = axs.ravel()[0]
-            im = ax.imshow(wrk_bef.T, origin='lower', cmap='jet')
-            cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            ax.set_title(f'Mirror edges {lab} (before)')
-            
-            ax = axs.ravel()[1]
-            im = ax.imshow(wrk_ext.T, origin='lower', cmap='jet')
-            cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            ax.set_title(f'Mirror edges {lab} (after)')
-            
-            for ax in axs.ravel():
-                ax.axis('scaled')
-                ax.set_xlabel('y (Easting) [km]')
-                ax.set_ylabel('x (Northing) [km]')
-            
-            fig.tight_layout(pad=1.0)
-            fig.savefig(f'Mirror_{lab}_QC_let_{led}.png')
+                scl = 1e-3
+                xtnt_ext = scl*np.array([data_ext.y[0], data_ext.y[-1], 
+                                         data_ext.x[0], data_ext.x[-1]])
+                fig, axs = plt.subplots(2,1, figsize=(6, 10))
+                
+                ax = axs.ravel()[0]
+                im = ax.imshow(wrk_bef.T, origin='lower', cmap='jet')
+                cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+                ax.set_title(f'Mirror edges {lab} (before)')
+                
+                ax = axs.ravel()[1]
+                im = ax.imshow(wrk_ext.T, origin='lower', cmap='jet')
+                cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+                ax.set_title(f'Mirror edges {lab} (after)')
+                
+                for ax in axs.ravel():
+                    ax.axis('scaled')
+                    ax.set_xlabel('y (Easting) [km]')
+                    ax.set_ylabel('x (Northing) [km]')
+                
+                fig.tight_layout(pad=1.0)
+                fig.savefig(f'Mirror_{lab}_QC_let_{led}.png')
+
+            except: 
+                print('meta.mirror_edges: Nothing to plot')
 
         return data_ext
 
@@ -753,6 +761,8 @@ class MapData:
         if verbose>0:
             print('meta.remove_edges:')
             print(f' o led = {led}')
+            print(f' o jx1, jx2 = {jx1}, {jx2}')
+            print(f' o jy1, jy2 = {jy1}, {jy2}')
             print(f' o Before: nx, ny = {self.nx}, {self.ny}')
             print(f' o After : nx, ny = {data.nx}, {data.ny}')
 
