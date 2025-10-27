@@ -400,7 +400,7 @@ def image_stack(inv_list, **kwargs):
     
     # Backward compatibility
     for kk in range(nb):
-        try: inv_list[kk].magn = inv_list[kk].mag
+        try:    inv_list[kk].magn = inv_list[kk].mag
         except: pass
 
     # Initialize model cube

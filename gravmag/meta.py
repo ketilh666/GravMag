@@ -709,7 +709,7 @@ class MapData:
                 fig.tight_layout(pad=1.0)
                 fig.savefig(f'Mirror_{lab}_QC_let_{led}.png')
 
-            except: 
+            except NameError:
                 print('meta.mirror_edges: Nothing to plot')
 
         return data_ext

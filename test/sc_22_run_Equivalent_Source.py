@@ -50,7 +50,9 @@ with open (pkl + fname_in, 'rb') as fid:
 # Expand edges and mirror data mirroring to suppress edge effects
 #--------------------------------------------------------------------
 
+# led = 0                             # Data  extension
 led = 20                             # Data  extension
+# led = 60                             # Data  extension
 lem = int(led*(data.dx/model.dx)) # Model extension
 
 data_ext = data.mirror_edges(led, verbose=1, kplot=False)
@@ -63,6 +65,7 @@ model_ext = model.mirror_edges(lem, verbose=1)
 eps = 1e-6
 lam = 1e-3
 
+# Resampling data and model 
 inc_data = 2
 inc_mod  = 2*inc_data
 
