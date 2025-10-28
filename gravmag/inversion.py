@@ -63,7 +63,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     kwargs
     ------
     niter: int (default is 0)
-        Number of non-linear GN iterations
+        Number of non-linear Gauss-Newton iterations
     func_jac: function object
         Function to compute the Jacobian wrt z2 in GN inversion
     nnn: int, optional (default nnn=1)
@@ -122,24 +122,21 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
 
     if verbose>0:
         print('### inversion.map_inversion:')
-        print(' o gf_max = {:d}'.format(int(gf_max)))
-        print(' o nnn = {}'.format(nnn))
-        print(' o nfl = {:d}'.format(nfl))
-        print(' o ltap = {:d}'.format(ltap))
-        print(' o nx_chunk  = {:d}'.format(nx_chunk))
-        print(' o ny_chunk  = {:d}'.format(ny_chunk))
-        print(' o lam  = {}'.format(lam))
-        print(' o inc_data = {}'.format(inc_data))
-        print(' o inc_mod  = {}'.format(inc_mod))
-        print(' o resamp = {}'.format(resamp))
-        print(' o snap = {}'.format(snap))
-        print(' o args:')
+        print(f' o gf_max = {int(gf_max):d}')
+        print(f' o nnn = {nnn}')
+        print(f' o nfl = {nfl}')
+        print(f' o ltap = {ltap}')
+        print(f' o nx_chunk  = {nx_chunk}')
+        print(f' o ny_chunk  = {ny_chunk}')
+        print(f' o lam  = {lam}')
+        print(f' o inc_data = {inc_data}')
+        print(f' o inc_mod  = {inc_mod}')
+        print(f' o resamp = {resamp}')
+        print(f' o snap = {snap}')
+        print(f' o args:')
         for kk, arg in enumerate(args):
             print(f'   - kk, arg = {kk}, {arg}')
 
-    # print('Then return ...')
-    # return -1, -1
-        
     # Initialize the output model object
     kh = MapData(model.x, model.y, model.z)
     kh.mag0 = nans_like(kh.gx)
@@ -167,7 +164,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
     if verbose >0: print('Roll-along inversion:')
     for iyc in range(ny_chunk):
         for ixc in range(nx_chunk):
-            if verbose > 0: print(' o iyx, ixc = {}, {}'.format(iyc, ixc))
+            if verbose > 0: print(f' o iyc, ixc = {iyc}, {ixc}')
                         
             indxs = ra_indxs(ixc, iyc, model, data, nfl, nnn)
             jx1, jx2, jy1, jy2, kx1, kx2, ky1, ky2 = indxs
@@ -176,7 +173,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             # Store the tile indices
             tiles['indxs'][iyc,ixc] = {key:idd for (key,idd) in zip(keys_indxs, list(indxs))}
             
-            if verbose > 1: print(' o my, mx = {}, {}'.format(my, mx))
+            if verbose > 1: print(f' o my, mx = {my}, {mx}')
             if verbose > 2:
                 print(f' o jy1, jy2, ky1, ky2, jx1, jx2, kx1, kx2 = {jy1}, {jy2}, {ky1}, {ky2}, {jx1}, {jx2}, {kx1}, {kx2}')
             
@@ -210,7 +207,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
 
             # First iter is the linear inversion (initial value for M is zero)
             it = 0
-            print('   - Iteration {}: Linear inversion'.format(it))
+            print(f'   - Iteration {it}: Linear inversion')
             base_it[it] = model.z[1][jy1:jy2+1, jx1:jx2+1][jnd].reshape(-1,1)
             vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
             LL = ds*func_grn(vr, vm_1, vm_2, *args, dx=data.dx, dx_snp=1.0)
@@ -223,7 +220,7 @@ def map_inversion(func_grn, data_in, model_in, *args, **kwargs):
             nh = magn_it[0].shape[0]
             for it in range(niter):
             
-                print('   - Iteration {}: Non-linear inversion'.format(it+1))
+                print(f'   - Iteration {it+1}: Non-linear inversion')
                 # Compute data residual for current model:
                 vm_2 = np.vstack([gx_flat, gy_flat, base_it[it].flatten()]).T
                 LL = ds*func_grn(vr, vm_1, vm_2, *args, dx=data.dx, dx_snp=dx_snp)
@@ -305,9 +302,6 @@ def ra_indxs(ixc, iyc, model, data, nfl, nnn):
     kx2 = int(np.rint(qatx + (jx2 + nnn*nfl)*ratx))           
     kx1, kx2 = np.maximum(kx1,0), np.minimum(kx2,data.nx-1)
             
-#    print('jx1, jx2, kx1, kx2 = {}, {} : {}, {}'.format(jx1, jx2, kx1, kx2))
-#    print('xm1, xm2, xd1, xd2 = {}, {} : {}, {}'.format(model.x[jx1], model.x[jx2], data.x[kx1], data.x[kx2]))
-
     return jx1, jx2, jy1, jy2, kx1, kx2, ky1, ky2
 
 #------------------------------------------------------------------------
@@ -340,7 +334,6 @@ def marq_leven(AA, dd, lam):
     JJ = np.diag(ATA.diagonal())
     mm, res, rank, s = np.linalg.lstsq(ATA+lam*JJ, dd_pc, rcond=None)
     cond = np.max(s)/np.min(s)
-    # print(f'marq_leven: condition number = {cond}')
     
     return mm, rank, cond
 
@@ -395,8 +388,8 @@ def image_stack(inv_list, **kwargs):
     nx, ny = inv_list[0].nx, inv_list[0].ny
     nb = len(inv_list)
     
-    print('image_stack: nx,ny,nb={},{},{}'.format(nx,ny,nb))
-    print(' o method={}'.format(method))
+    print(f'image_stack: nx,ny,nb={nx},{ny},{nb}')
+    print(f' o method={method}')
     
     # Backward compatibility
     for kk in range(nb):
@@ -435,12 +428,9 @@ def image_stack(inv_list, **kwargs):
                     z0, z1 = inv_list[kk].z[0][jj,ii], inv_list[kk].z[1][jj,ii]
                     k0 =  int(np.round((z0-z[0])/dz))
                     k1 =  int(np.round((z1-z[0])/dz))
-                    #if (ii==0) and (jj==0): print(kk, k0, k1)
-#                    stk[k0:k1+1, jj, ii] = stk[k0:k1+1, jj, ii] + inv_list[kk].magn[jj, ii]
                     uu[k0:k1+1] = uu[k0:k1+1] + inv_list[kk].magn[jj, ii]
                     
                 # FIll in nan down to seabed and filter
-#                stk[0:k0, jj, ii] = np.nan
                 uu[0:k0] = np.nan
                 stk[:,jj,ii] = smooth(uu, lf)                
                 

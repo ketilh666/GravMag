@@ -18,6 +18,10 @@ from gravmag.earth import MagneticBackgroundField
 from gravmag.meta import xy_taper
 # from gravmag.common import gridder
 
+#----------------------
+# Folders
+#----------------------
+
 xyz_dir = '../data/eq_source/xyz/'
 fname = 'LARGE_Delta_T_Alti230m.XYZ'
 
@@ -39,6 +43,7 @@ n_nort = int(np.round(wrk.shape[0]/n_east))
 nn = n_east*n_nort
 print(f'CHECKING: n_east, n_nort, nn-wrk.shape[0] = {n_east:.0f}, {n_nort:.0f}, {nn-wrk.shape[0]:.0f}')
 
+# On regular grid
 g_east  = wrk[:,0].reshape(n_nort, n_east)
 g_nort  = wrk[:,1].reshape(n_nort, n_east)
 east, nort = g_east[0,:], g_nort[:,0]
@@ -46,15 +51,6 @@ tma = wrk[:,2].reshape(n_nort, n_east)
 
 # Flight altitude
 zalt = -240*np.ones_like(tma)
-
-#-----------------------------------------
-# Extend taper data area: trivial so far
-#-----------------------------------------
-
-east_ext = east
-nort_ext = nort
-zalt_ext = zalt
-tma_ext = tma
 
 #---------------------------
 # Create MapData objects
@@ -64,17 +60,17 @@ tma_ext = tma
 #---------------------------
 
 # Data
-data = MapData(nort_ext, east_ext, zalt_ext.T)
-data.tma = tma_ext.T 
+data = MapData(nort, east, zalt.T)
+data.tma = tma.T 
 
-# Model
+# Model geometry
 inc = 2
 n_east_mod = int((data.ny-1)/inc + 1)
 n_nort_mod = int((data.nx-1)/inc + 1)
 z_seabed =   230.0*np.ones((n_east_mod, n_nort_mod))
-z_top  =  6000 # Top  Magnetic layer
+z_top  = 10000 # Top  Magnetic layer
 z_base = 18000 # Base Magnetic layer
-mod_geom = MapData(nort_ext[::inc], east_ext[::inc], [z_top, z_base])
+mod_geom = MapData(nort[::inc], east[::inc], [z_top, z_base])
 
 # Magnetic background field
 B0, inc, dec = 52000, 90.0, 0.0 # B0 in nT, assuming RTP
@@ -86,13 +82,13 @@ mod_geom.B0, mod_geom.inc, mod_geom.dec = B0, inc, dec
 # Band decomposition 
 #------------------------------
 
-# Blakely top and base from power spectrum
+# Top and base from power spectrum (Blakely, 1996)
 zz_nofilt  = data.power_depth(k_min=0, k_max=0.1*np.pi/data.dx, kplot=True )
 zz_nofilt['fig'].savefig(png + 'All_Data_Power_Depth.png')
 
 # Band decomposition
 k_nyq = np.pi/data.dx
-rk = [1/4, 1/2, 1] # Rel Nyquist
+rk = [1/4, 2/4, 3/4] # Rel Nyquist wavenumber
 nband = len(rk)
 
 data_filt = [None for r in rk]
@@ -142,7 +138,7 @@ with open (pkl + f'LARGE_TMA_Data_taper_{ctap}.pkl', 'wb') as fid:
 cmap = 'jet'
 scl = 1e-3
 xtnt = scl*np.array([data.y.min(), data.y.max(), data.x.min(), data.x.max()])
-# Make symmetric coloscale
+# Symmetric coloscale
 vmax = np.max(np.abs(data.tma))
 vmin = -vmax
 

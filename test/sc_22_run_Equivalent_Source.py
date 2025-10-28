@@ -42,9 +42,6 @@ fname_in = 'LARGE_TMA_Data_taper_0.pkl'
 print(f'Input data file: {pkl + fname_in}')
 with open (pkl + fname_in, 'rb') as fid:
     [data, data_band, data_filt, model] = pickle.load(fid)
-    
-    model.z[0] += 4000.0
-    # model.z[1] += 4000.0
 
 #--------------------------------------------------------------------
 # Expand edges and mirror data mirroring to suppress edge effects
@@ -62,8 +59,8 @@ model_ext = model.mirror_edges(lem, verbose=1)
 # Run inversion 
 #------------------------------
 
-eps = 1e-6
-lam = 1e-3
+eps = 1e-6 # Stabilization (avoid division by zero)
+lam = 1e-3 # Marquardt-Levenberg parameter
 
 # Resampling data and model 
 inc_data = 2
@@ -81,7 +78,7 @@ tic = time.perf_counter()
 inver_ext, synt_ext = map_inversion(green, data_ext, model_ext, *args,
                                     lam=lam, gf_max=gf_max, nnn=1, 
                                     inc_data=inc_data, inc_mod=inc_mod,
-                                    resamp=False, verbose=3)
+                                    resamp=False, verbose=1)
 
 toc = time.perf_counter()
 print(f'Time inversion: {toc-tic:.1f} sec')

@@ -17,7 +17,7 @@ from gravmag.common import smooth
 def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
     """ Forward modeling of data with magntization model from map inversion.
     
-    The purpose of the function is to perform redatuming of magnetic data
+    The purpose of this function is redatuming of magnetic data
     by the equivalent source method. Typical workflow:
         
         1. Map inversion of magnetic data recorded at datum z=zr.
@@ -43,7 +43,7 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         Direction of earth magnetic background field (tangent vector)
     vt_m: float, 3C vector, shape=(1,3)
         Direction of magnetization, currently va=vt
-    eps: float, stabilization (typically eps=1e-12)        
+    eps: float, stabilization (typically eps=1e-6)        
 
     kwargs
     ------
@@ -53,12 +53,13 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         Max numer of Green's function elements per chunk in roll-along inversion
     inc_data: int. Data resampling 
     inc_mod: int. Model resamlping
+    resamp: bool. Resample synthetics back to original data grid? (default is True)
     verbose: int, print shit?
     z_list: list or np.array. List of new datums (default is z_list = geom.z)
     snap: bool. Snap to grid? (default is snap=True)
 
     Programmed:
-        Ketil Hokstad, 6. August 2025    
+        KetilH, 6. August 2025    
     """
     
     # Get kwargs
@@ -90,17 +91,19 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
 
     if verbose>0:
         print('### modeling.map_modeling:')
-        # print(' o gf_max = {:d}'.format(int(gf_max)))
-        # print(' o nnn = {}'.format(nnn))
-        # print(' o nfl = {:d}'.format(nfl))
-        # print(' o nx_chunk  = {:d}'.format(nx_chunk))
-        # print(' o ny_chunk  = {:d}'.format(ny_chunk))
-        print(' o inc_data = {}'.format(inc_data))
-        print(' o inc_mod  = {}'.format(inc_mod))
-        print(' o z_list = {}'.format(z_list))
-        print(' o args:')
+        # print(f' o gf_max = {int(gf_max):d}')
+        # print(f' o nnn = {nnn}')
+        # print(f' o nfl = {nfl}')
+        # print(f' o nx_chunk  = {nx_chunk}')
+        # print(f' o ny_chunk  = {ny_chunk}')
+        print(f' o inc_data = {inc_data}')
+        print(f' o inc_mod  = {inc_mod}')
+        print(f' o resamp = {resamp}')
+        print(f' o snap = {snap}')
+        print(f' o z_list = {z_list}')
+        print(f' o args:')
         for kk, arg in enumerate(args):
-            print('   - kk, arg = {}, {}'.format(kk, arg))
+            print(f'   - kk, arg = {kk}, {arg}')
         # print(f' o nx, dx = {geom.nx}, {geom.dx}')
 
     # Filters to remove nan and inf
@@ -129,8 +132,6 @@ def map_modeling(func_grn, geom_in, model_in, *args, **kwargs):
         else:
             dx_snp = 1.0
             
-        # print(f'rat = {rat}, dx_snp={dx_snp}')
-
         # Data space:
         synt = MapData(geom.x, geom.y, z)
         synt.tma = np.zeros_like(synt.z[0])
