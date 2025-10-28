@@ -15,7 +15,7 @@ d2r, r2d = np.pi/180, 180/np.pi
 #   Compute Greens function matrix
 #--------------------------------------------------
 
-def green(vr, vm_1, vm_2, eps):
+def green(vr, vm_1, vm_2, eps, **kwargs):
     """ Compute the Gravity Gzz Green's function matrix.
  
     The function depends only on geometry, i.e. x, y, z of magnetic 
@@ -43,6 +43,9 @@ def green(vr, vm_1, vm_2, eps):
         Ketil Hokstad, 15. September 2025 (FTG; Gzz)
     """
             
+    # dy = dx = kwargs.get('dx', 1000.0)
+    # dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
+
     nr = vr.shape[0]
     nm = vm_2.shape[0]
     

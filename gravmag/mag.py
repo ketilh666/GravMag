@@ -67,7 +67,7 @@ def green(vr, vm_1, vm_2, vt_e, vt_m, eps, **kwargs):
         Ketil Hokstad, 24. September 2024 (snap to grid)
     """
             
-    dy = dx = kwargs.get('dx', 1000.0)
+    # dy = dx = kwargs.get('dx', 1000.0)
     dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
 
     vr_snp = np.ones_like(vr)
@@ -152,7 +152,7 @@ def green_rtp(vr, vm_1, vm_2, eps, **kwargs):
         Ketil Hokstad, 24. September 2024 (snap to grid)
     """
             
-    dy = dx = kwargs.get('dx', 1000.0)
+    # dy = dx = kwargs.get('dx', 1000.0)
     dy_snp = dx_snp = kwargs.get('dx_snp', 1.0)
 
     vr_snp = np.ones_like(vr)
