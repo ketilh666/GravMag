@@ -38,7 +38,7 @@ datas = {}
 synts = {}
 synt_lists = {}
 
-led_list = [20, 40, 60]
+led_list = [0, 20, 40, 60]
 print(f'led_list = {led_list}')
 
 for led in led_list:
@@ -70,10 +70,10 @@ yr1, yr2 = data.x[0], data.x[-1]
 rect_x = scl*np.array([xr1, xr2, xr2, xr1, xr1])
 rect_y = scl*np.array([yr1, yr1, yr2, yr2, yr1])
 
-ncol, nrow = 3,3
-fig, axs = plt.subplots(nrow, ncol, figsize=(14,12))
+ncol, nrow = 3, len(led_list)
+fig, axs = plt.subplots(nrow, ncol, figsize=(14,nrow*4))
 
-led1 = led_list[2]
+led1 = led_list[0]
 synt_list1 = synt_lists[led1]
 for ii, jj in enumerate([0,3,5]):
     
@@ -85,31 +85,18 @@ for ii, jj in enumerate([0,3,5]):
     cb.set_label('TMA [nT]')
     ax.set_title(f'led={led1}, z={z_list[jj]}m')
 
-led = led_list[1]
-synt_list = synt_lists[led]
-for ii, jj in enumerate([0,3,5]):
-    
-    st1 = synt_list1[jj]
-    st = synt_list[jj]
-    ax = axs.ravel()[ii+1*ncol]
-    im = ax.imshow(st.tma.T-st1.tma.T, origin='lower', extent=xtnt, 
-                   vmin=vmin, vmax=vmax, cmap=cmap)
-    cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cb.set_label('TMA [nT]')
-    ax.set_title(f'Diff led={led1}, led={led}, z={z_list[jj]}m')
-
-led = led_list[0]
-synt_list = synt_lists[led]
-for ii, jj in enumerate([0,3,5]):
-    
-    st1 = synt_list1[jj]
-    st = synt_list[jj]
-    ax = axs.ravel()[ii+2*ncol]
-    im = ax.imshow(st.tma.T-st1.tma.T, origin='lower', extent=xtnt, 
-                   vmin=vmin, vmax=vmax, cmap=cmap)
-    cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cb.set_label('TMA [nT]')
-    ax.set_title(f'Diff led={led1}, led={led}, z={z_list[jj]}m')
+for kk, led in enumerate(led_list[1:]):
+    synt_list = synt_lists[led]
+    for ii, jj in enumerate([0,3,5]):
+        
+        st1 = synt_list1[jj]
+        st = synt_list[jj]
+        ax = axs.ravel()[ii+(kk+1)*ncol]
+        im = ax.imshow(st.tma.T-st1.tma.T, origin='lower', extent=xtnt, 
+                    vmin=vmin, vmax=vmax, cmap=cmap)
+        cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        cb.set_label('TMA [nT]')
+        ax.set_title(f'Diff led={led1}, led={led}, z={z_list[jj]}m')
 
 for ax in axs.ravel():
     ax.plot(rect_x, rect_y, 'm-')

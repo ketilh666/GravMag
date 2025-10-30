@@ -64,7 +64,7 @@ data = MapData(nort, east, zalt.T)
 data.tma = tma.T 
 
 # Model geometry
-inc = 2
+inc = 1
 n_east_mod = int((data.ny-1)/inc + 1)
 n_nort_mod = int((data.nx-1)/inc + 1)
 z_seabed =   230.0*np.ones((n_east_mod, n_nort_mod))
@@ -128,7 +128,7 @@ ntap_tma = 0
 data.tma = xy_taper(data.tma, ntap_tma)
 
 ctap = str(ntap_tma)
-with open (pkl + f'LARGE_TMA_Data_taper_{ctap}.pkl', 'wb') as fid:
+with open (pkl + f'LARGE_TMA_Data.pkl', 'wb') as fid:
     pickle.dump([data, data_band, data_filt, mod_geom], fid)
 
 #---------------------------

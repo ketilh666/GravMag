@@ -38,7 +38,7 @@ write_pkl  = True
 # At this point, the model only defines geometry
 #-----------------------------------------------------
 
-fname_in = 'LARGE_TMA_Data_taper_0.pkl'
+fname_in = 'LARGE_TMA_Data.pkl'
 print(f'Input data file: {pkl + fname_in}')
 with open (pkl + fname_in, 'rb') as fid:
     [data, data_band, data_filt, model] = pickle.load(fid)
@@ -47,11 +47,13 @@ with open (pkl + fname_in, 'rb') as fid:
 # Expand edges and mirror data mirroring to suppress edge effects
 #--------------------------------------------------------------------
 
-# led = 0                             # Data  extension
-# led = 20                             # Data  extension
-# led = 40                             # Data  extension
-led = 60                             # Data  extension
-lem = int(led*(data.dx/model.dx)) # Model extension
+# led = 80                              # Data  extension
+# led = 60                              # Data  extension
+led = 40                              # Data  extension
+# led = 20                              # Data  extension
+# led = 0                               # Data  extension
+lem = int(led*(data.dx/model.dx))     # Model extension
+print(f'### led, lem = {led}, {lem}')
 
 data_ext = data.mirror_edges(led, verbose=1, kplot=False)
 model_ext = model.mirror_edges(lem, verbose=1)
@@ -65,7 +67,7 @@ lam = 1e-3 # Marquardt-Levenberg parameter
 
 # Resampling data and model 
 inc_data = 2
-inc_mod  = 2*inc_data
+inc_mod  = 4*inc_data
 
 # Assume RTP
 # green = mag.green_rtp  # Slow 3D function
@@ -105,7 +107,7 @@ tic = time.perf_counter()
 synt_list_ext = map_modeling(green, geom_ext, inver_ext, *args, 
                              gf_max=gf_max, nnn=1,  
                              inc_data=inc_data, inc_mod=1, 
-                             resamp=True, snap=True, verbose=1)
+                             resamp=True, snap=False, verbose=1)
 
 toc = time.perf_counter()
 print(f'Time modeling: {toc-tic:.1f} sec')
