@@ -4,3 +4,4 @@
 build
 mgi.egg-info
 data/pkl
+test/esri_*

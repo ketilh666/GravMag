@@ -38,7 +38,9 @@ datas = {}
 synts = {}
 synt_lists = {}
 
-led_list = [0, 20, 60]
+led_list = [20, 40, 60]
+print(f'led_list = {led_list}')
+
 for led in led_list:
 
     fname = f'LARGE_TMA_Edge_Mirrored_led_{led}.pkl'

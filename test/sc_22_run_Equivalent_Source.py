@@ -48,8 +48,9 @@ with open (pkl + fname_in, 'rb') as fid:
 #--------------------------------------------------------------------
 
 # led = 0                             # Data  extension
-led = 20                             # Data  extension
-# led = 60                             # Data  extension
+# led = 20                             # Data  extension
+# led = 40                             # Data  extension
+led = 60                             # Data  extension
 lem = int(led*(data.dx/model.dx)) # Model extension
 
 data_ext = data.mirror_edges(led, verbose=1, kplot=False)
@@ -71,7 +72,7 @@ inc_mod  = 2*inc_data
 green = mag.green_1d    # Fast 1D function
 args = [eps]
 
-gf_max = 1e12  # Controls subdivision in chunks (make it huge)
+gf_max = 10**12  # Controls subdivision in chunks (make it huge)
 niter  = 0     # Run linear inversion only
 
 tic = time.perf_counter()
@@ -139,8 +140,8 @@ if write_pkl:
     with open (pkl + fname_ut, 'wb') as fid:
         pickle.dump([data, model, synt, synt_list], fid)
         
-    with open (pkl + fname_ut, 'rb') as fid:
-        [data, model, synt, synt_list] = pickle.load(fid)
+    # with open (pkl + fname_ut, 'rb') as fid:
+    #     [data, model, synt, synt_list] = pickle.load(fid)
 
 #---------------------------
 # QC plotting
