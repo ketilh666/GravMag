@@ -47,10 +47,9 @@ with open (pkl + fname_in, 'rb') as fid:
 # Expand edges and mirror data mirroring to suppress edge effects
 #--------------------------------------------------------------------
 
-# led = 80                              # Data  extension
-# led = 60                              # Data  extension
-led = 40                              # Data  extension
-# led = 20                              # Data  extension
+led = 64                              # Data  extension
+# led = 48                              # Data  extension
+# led = 24                              # Data  extension
 # led = 0                               # Data  extension
 lem = int(led*(data.dx/model.dx))     # Model extension
 print(f'### led, lem = {led}, {lem}')

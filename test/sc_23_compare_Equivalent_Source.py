@@ -38,7 +38,9 @@ datas = {}
 synts = {}
 synt_lists = {}
 
-led_list = [0, 20, 40, 60]
+jz_list  = [0, 1, 3, 5]
+led_list = [0, 24, 48]
+led_list.reverse()
 print(f'led_list = {led_list}')
 
 for led in led_list:
@@ -70,12 +72,12 @@ yr1, yr2 = data.x[0], data.x[-1]
 rect_x = scl*np.array([xr1, xr2, xr2, xr1, xr1])
 rect_y = scl*np.array([yr1, yr1, yr2, yr2, yr1])
 
-ncol, nrow = 3, len(led_list)
-fig, axs = plt.subplots(nrow, ncol, figsize=(14,nrow*4))
+ncol, nrow = len(jz_list), len(led_list)
+fig, axs = plt.subplots(nrow, ncol, figsize=(4*len(jz_list),nrow*3.5))
 
 led1 = led_list[0]
 synt_list1 = synt_lists[led1]
-for ii, jj in enumerate([0,3,5]):
+for ii, jj in enumerate(jz_list):
     
     st1 = synt_list1[jj]
     ax = axs.ravel()[ii]
@@ -83,11 +85,11 @@ for ii, jj in enumerate([0,3,5]):
                    vmin=vmin, vmax=vmax, cmap=cmap)
     cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     cb.set_label('TMA [nT]')
-    ax.set_title(f'led={led1}, z={z_list[jj]}m')
+    ax.set_title(f'led={led1}, z={1e-3*z_list[jj]}km')
 
 for kk, led in enumerate(led_list[1:]):
     synt_list = synt_lists[led]
-    for ii, jj in enumerate([0,3,5]):
+    for ii, jj in enumerate(jz_list):
         
         st1 = synt_list1[jj]
         st = synt_list[jj]
@@ -96,7 +98,7 @@ for kk, led in enumerate(led_list[1:]):
                     vmin=vmin, vmax=vmax, cmap=cmap)
         cb = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         cb.set_label('TMA [nT]')
-        ax.set_title(f'Diff led={led1}, led={led}, z={z_list[jj]}m')
+        ax.set_title(f'Diff led=({led1},{led}), z={1e-3*z_list[jj]}km')
 
 for ax in axs.ravel():
     ax.plot(rect_x, rect_y, 'm-')
@@ -107,8 +109,8 @@ for ax in axs.ravel():
 z_top, z_base = np.mean(model.z[0]), np.mean(model.z[1])
 inc_data = 2
 inc_mod  = 2*inc_data
-fig.suptitle(f'Comparison Equivalent source redatuming (z_top={z_top:.0f}m, z_base={z_base:.0f}m, inc_mod={inc_mod}, inc_data={inc_data}, led={led})')
-fig.tight_layout(pad=1.0)
+fig.suptitle(f'Comparison Equivalent source redatuming (z_top={1e-3*z_top:.1f}km, z_base={1e-3*z_base:.1f}km, inc_mod={inc_mod}, inc_data={inc_data}, led={led})')
+fig.tight_layout(pad=2.0)
 fig.savefig(png + 'Difference_Edge_Tapers.png')
 
 plt.show(block=block)
